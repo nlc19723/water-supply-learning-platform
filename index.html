@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- B1-D4 无障碍修复（2026-11-19）：放开移动端双指/双击缩放，恢复 WCAG 1.4.4 合规。
+     规格号(De110)、SDR、GB 标准号等小字需可放大查看；误触改由 overscroll-behavior 与
+     卡片防抖治理，不再以全局禁缩放为代价。 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="app-version" content="2.26.2">
+<link rel="icon" type="image/png" href="favicon.png">
+<!-- PWA 配置 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B5CAD">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="供水学习平台">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>供水学习平台 · 全员学习与作业支持</title>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (e) {
+      console.warn('SW注册失败:', e);
+    });
+  });
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <link rel="stylesheet" href="static/app.a73abab08c.css">
+</head>
+<body>
+<!-- B1-DK16：键盘用户跳过导航直达内容 -->
+<a class="skip-link" href="#mainContent">跳转到主要内容</a>
+<div class="app">
+  <!-- 侧边导航 -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">
+        <svg class="hexmark" viewBox="0 0 1000 1000" aria-label="供水学习平台" role="img"><path fill="currentColor" d="M118.95,280L118.95,720L500,940L881.05,720L881.05,280L500,60L118.95,280ZM567.99,338.66L566.69,353.27L562.3,367.25L500,496L435.54,361.65L432.64,349.32L432.08,336.66L433.73,324.78L437.7,312.75L443.46,302.22L450.52,293.35L458.96,285.78L468.54,279.72L478.99,275.33L490.02,272.74L502,272.03L513.27,273.31L524.16,276.44L534.38,281.33L544.16,288.29L552.14,296.35L558.67,305.62L563.8,316.46L566.82,327.39L567.99,338.66ZM178.73,432.76L185.48,419.72L194.27,406.13L204.36,393.54L215.64,382.1L225.79,373.66L237.84,365.92L250.59,359.65L266.45,354.1L278.86,351.28L295.12,349.47L311.18,349.75L324.17,351.52L339.06,355.39L352.94,361.06L364.21,367.48L375.99,376.58L383.69,384.6L388.69,391.35L392.87,398.96L395.21,405.34L396.47,412.84L395.94,419.72L394.02,425.78L390.55,431.11L383.29,436.78L374.07,439.45L365.86,439.36L339.96,434.27L326.32,433.45L310.4,435.8L296.39,441.72L289.68,446.52L285.75,450.76L279.7,459.2L274.9,468.18L269.63,484.2L268.03,502.53L270.41,519.11L273.55,528.67L277.15,536.39L282.6,545.14L288.35,552.24L298.96,559.71L313.49,564.97L327.97,566.58L341.78,565.46L365.86,560.64L373.45,560.48L382.24,562.72L389.37,567.62L392.93,572.17L395.27,577.46L396.43,584.03L396.22,589.66L394.82,595.93L391.64,603.6L387,611.14L381.65,617.76L373.56,625.55L366.25,631.14L356.83,636.94L346.59,641.81L335.66,645.68L324.17,648.48L312.23,650.16L299.98,650.66L277.77,648.52L266.45,645.9L254.23,641.83L233.4,631.46L215.64,617.9L198.39,599.34L184.85,579.2L174.48,557.14L167.31,532.46L164.21,508.17L164.97,482.41L169.48,458.36L173.09,446.68L178.73,432.76ZM642.36,363.51L654.3,357.84L668.76,353.1L684.1,350.23L696.27,349.36L709.75,349.8L724.92,352L738.38,355.55L750.48,360.11L762.16,365.92L774.21,373.66L785.25,382.92L796.45,394.46L806.46,407.13L814.52,419.72L820.75,431.62L826.91,446.68L830.85,459.59L834.14,475.58L835.79,491.83L835.9,505.36L834.71,520.38L831.82,536.45L828.21,549.46L822.43,564.68L815.15,579.2L808.06,590.56L799.07,602.47L788.15,614.31L777.39,623.91L766.6,631.46L754.08,638.26L742.09,643.2L721.14,648.72L701.1,650.65L680.45,649.28L660.94,644.61L643.17,636.94L627.1,626.1L620.52,620.05L613.91,612.37L609.04,604.87L606.07,598.47L603.62,588.41L604.29,579.14L607.69,571.2L613.73,565.01L620.48,561.71L629.68,560.36L637.5,561.13L660.04,565.73L675.32,566.49L688.06,564.6L698.36,561.02L710.32,553.48L718.4,543.71L726.45,528.67L730.99,512.48L731.97,502.53L731.79,494.11L730.37,484.2L727.65,474.52L723.62,465.1L718.4,456.29L711.65,447.76L706.11,443.3L698.36,438.98L691.11,436.24L675.32,433.51L661.78,434.04L636.81,438.98L625.31,439.37L619.38,437.92L614.7,435.64L610.63,432.38L607.07,427.83L604.29,420.86L603.53,412.84L604.98,404.7L608.7,395.76L613.91,387.63L621.68,378.79L630.35,371.32L642.36,363.51ZM427.48,617.78L500,504L573.33,619.07L581.25,635.82L585.5,654.73L585.4,674.11L580.97,692.97L572.43,710.37L561.99,723.61L549.17,734.55L534.46,742.79L518.43,748L501.69,749.98L484.88,748.66L468.66,744.08L453.63,736.43L440.39,725.99L429.45,713.17L421.21,698.46L416,682.43L414.02,665.69L415.34,648.88L419.92,632.66L427.48,617.78Z" fill="#FFFFFF" fill-rule="evenodd"/></svg>
+      </div>
+      <div><b>供水学习平台</b><span>全员学习 · 作业支持</span></div>
+    </div>
+    <nav class="nav" id="nav" role="tablist" aria-label="平台板块">
+      <div class="grp">学习 · 应用闭环</div>
+      <div class="navitem active" data-mod="materials" role="tab" tabindex="0" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>
+        <span>材料认知库</span><span class="tag live">已上线</span>
+      </div>
+      <div class="navitem" data-mod="courses" role="tab" tabindex="0" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+        <span>课程体系</span><span class="tag plan">试运行</span>
+      </div>
+      <div class="navitem" data-mod="exam" role="tab" tabindex="0" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M9 7v-2h6v2M7 7h10a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="m9.5 13 1.5 1.5 3-3.5"/></svg>
+        <span>考核练习</span><span class="tag plan">规划中</span>
+      </div>
+      <div class="navitem" data-mod="kb" role="tab" tabindex="0" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
+        <span>知识库问答</span><span class="tag plan">规划中</span>
+      </div>
+    </nav>
+    <div class="side-foot">版本 v2.26.2<br>© 供水公司培训中心</div>
+  </aside>
+
+  <!-- 主区 -->
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-btn btn">≡</button>
+      <div>
+        <div class="mtitle" id="topTitle">材料认知库</div>
+        <div class="msub" id="topSub">供水材料的图鉴与认知 · 点卡片看大图与完整说明</div>
+      </div>
+      <div class="spacer"></div>
+      <span class="ver-chip" id="verChip">v2.26.2</span>
+      <span class="pill ok" id="stagePill" role="status" data-state="ok">阶段一 · 已上线</span>
+    </div>
+    <div class="content" id="mainContent" tabindex="-1">
+
+      <!-- B4 · P1-01 首屏引导：首次展开、可永久收起（localStorage） -->
+      <aside class="intro" id="introBar" role="note" aria-label="平台使用引导">
+        <span class="intro-ic" aria-hidden="true">ℹ</span>
+        <div class="intro-tx"><b>快速上手</b>（共 <b id="introCount">…</b> 项材料）：① 点卡片看详情　② 点虚线词看解释　③ 顶部分类可横滑筛选</div>
+        <button class="intro-x" id="introX" aria-label="收起引导且不再显示">知道了 ✕</button>
+      </aside>
+
+      <!-- 模块一：材料认知库（嵌入现有站点） -->
+      <section class="module active" id="m-materials">  <!-- MAT_LIB_START -->
+  <!-- ⚠ 生成区｜mat_inline.py ← materials.html 的 DOM/JS · 请勿手改 index.html，请改 materials.html -->
+  <div id="mat-lib">
+<header>
+  <div class="wrap">
+    <h1>供水材料学习认知平台</h1>
+    <p>初步认知版 · 聚焦「结构 / 原理 / 规格 / 标准 / 搭配」· 7 大类 108 项 · 管件按材质细分并标注连接方式与作用 · 多数配实物图 · 悬停术语可见解释</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- 安装图库 / 单件材料 视图切换（手写稳定区） -->
+  <div class="ig-seg" role="tablist" aria-label="认知视图切换">
+    <button role="tab" id="igTabSingle" aria-selected="true" onclick="IG_mode('single')">材料图库</button>
+    <button role="tab" id="igTabGallery" aria-selected="false" onclick="IG_mode('gallery')">安装图库</button>
+  </div>
+
+  <!-- 安装图库视图 -->
+  <div id="igView">
+    <div class="ig-lead" id="igLead">将材料按真实安装组合成「总成」认知：<b>点击总成卡片</b>进入详情页，图中编号与部件表<b>双向联动</b>，点部件名可跳转到对应材料卡。图中标注为示意，具体型号以现场实际配置为准。</div>
+    <div class="ig-grid" id="igGrid"></div>
+    <!-- 总成详情页（页面内视图，非弹窗） -->
+    <div id="igDetail">
+      <div class="igd-topline">
+        <button class="igd-back" onclick="IG_back()" aria-label="返回安装图库">‹ 返回安装图库</button>
+        <button type="button" class="ig-flowbtn" id="igFlowBtn" onclick="IG_openFlow()" aria-label="查看安装流程">查看安装流程</button>
+      </div>
+      <div class="igd-head">
+        <h3 id="igpTitle"></h3>
+        <div class="igsub" id="igpSub"></div>
+      </div>
+      <div class="ig-taphint" id="igTapHint" aria-hidden="true">
+        <span class="ig-taphint-ico">✦</span>
+        <span class="ig-taphint-txt">轻点<span class="ig-taphint-dot">序号</span>看部件 · 轻点<span class="ig-taphint-zoom">图片</span>看大图</span>
+        <span class="ig-taphint-down">↓</span>
+      </div>
+      <div class="igd-body">
+        <div class="igfigure" id="igFigure">
+          <div class="igstage" id="igStage">
+            <img id="igImg" alt="安装总成图" role="button" tabindex="0"
+              onclick="IGlbOpen()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();IGlbOpen()}">
+            <div class="ig-zoomtip" aria-hidden="true">
+              <span class="ig-zoomtip-ico">⤢</span><span class="ig-zoomtip-txt">单击图片放大</span>
+            </div>
+          </div>
+        </div>
+        <div class="igplist" id="igList">
+          <h4 id="igListTitle">图中部件 · 点序号看详情</h4>
+          <div id="igRows"></div>
+          <div class="igscrollhint" id="igScrollHint" aria-hidden="true">↓ 向下滚动查看更多部件</div>
+        </div>
+      </div>
+      <div class="igpfoot" id="igpFoot"></div>
+    </div>
+
+    <!-- 移动端底部抽屉：部件说明（点热点）/ 安装流程（顶部按钮），共用同一抽屉壳 -->
+    <div class="igs-mask" id="igsMask" onclick="IGsClose()" aria-hidden="true"></div>
+    <div class="igs-sheet" id="igsSheet" role="dialog" aria-modal="true" aria-labelledby="igsTitle" aria-hidden="true">
+      <div class="igs-grab" aria-hidden="true"></div>
+      <button type="button" class="igs-close" id="igsClose" onclick="IGsClose()" aria-label="关闭">×</button>
+      <div class="igs-title" id="igsTitle"></div>
+      <div class="igs-body" id="igsBody"></div>
+      <div class="igs-nav" id="igsNav"></div>
+    </div>
+  </div>
+
+  <!-- 单件材料视图（原有内容包裹，默认显示） -->
+  <div id="igSingle">
+  <div class="banner"><span class="ok-badge">✓</span> <b>分类已细化</b>：7 大类 / 二级 / 三级 / 型号级；<b>点击一级只显示其下二级</b>（不跨类），阀门细分至型号级（明杆/暗杆闸阀、复合/快速/微量排气阀、浮动/固定球阀等）｜ 现有 108 项材料、多数配实物图，<b>正文术语悬停即见解释</b>；键盘可用 Tab/Enter 切换分类。</div>
+
+  <div class="progress">
+    <span>初步内容采编</span>
+    <span class="bar"><i></i></span>
+    <span id="pcount">—</span>
+  </div>
+
+  <!-- B4-M3：删除 7 步学习路径（display:none 的死 DOM + 不可用跳转，与分类 chip 功能重复）。
+       分类切换仍由下方分类 chip 承担，键盘 Tab/Enter 可用。 -->
+
+  <!-- 吸顶筛选条：搜索框 + 分类 chip（「仅看公司现用」筛选按钮已按需求移除，全部材料默认可见）。 -->
+  <div class="filterbar" id="filterbar">
+    <div class="controls">
+      <input id="q" class="search" placeholder="搜索材料 / 管件名称 / 型号 / 材质…" oninput="render()">
+    </div>
+    <div class="filterrow">
+      <div class="tabs" id="tabs"></div>
+    </div>
+    <button class="term-toggle" id="termBtn" onclick="toggleTerms()" aria-pressed="true" title="点击虚线词查看解释">术语解释：开</button>
+  </div>
+  <div class="tabs2" id="tabs2"></div>
+
+  <div class="crumb" id="crumb"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    <p><b>分类结构</b>：按「大类 → 材质/功能 → 具体类型 → 型号」逐级展开，点一级即看它的下级。每张卡片含常用规格型号、执行标准、结构组成、连接方式与作用、优势、常搭配使用等信息；正文带虚线的术语，点一下就能看解释。执行标准均为核实的现行国标/行标，未核实的留空不填。</p>
+    <p style="margin-top:8px"><b>「✓ 公司现用」</b>角标表示本公司当前在用的材料，可作为选用参考。本板块内容仅供内部学习认知使用。</p>
+  </footer>
+  </div><!-- /#igSingle -->
+</div>
+
+<div class="modal-mask" id="mask">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="close" onclick="closeModal()" aria-label="关闭">✕</button>
+    <h4 id="mTitle"></h4>
+    <div class="sub" id="mSub"></div>
+    <div class="mlab">所属材料 · 结构组成</div>
+    <ul class="parts" id="mParts"></ul>
+    <div class="mlab" id="mLab2">工作原理</div>
+    <div class="principle" id="mBody"></div>
+    <div class="mmore" id="mMore"></div>
+  </div>
+</div>
+
+<div class="exp-mask" id="expmask"></div>
+<div class="exp-card" id="expcard" role="dialog" aria-modal="true" aria-labelledby="expTitle">
+  <div class="exp-head">
+    <div><h4 id="expTitle"></h4><div class="bsub" id="expSub"></div></div>
+    <button class="exp-close" id="expClose" aria-label="关闭">✕</button>
+  </div>
+  <div class="exp-main">
+    <!-- 实物大图面（点击翻到完整说明） -->
+    <div class="exp-figure" id="expFigure">
+      <figure class="exp-fig" id="expFig"></figure>
+      <button class="flip-hint" id="expToFlip" aria-label="翻到材料完整说明">看完整说明</button>
+    </div>
+    <!-- 完整说明面（点击空白处返回实物图） -->
+    <div class="exp-back" id="expBack">
+      <div class="exp-body" id="expBody"></div>
+      <button class="flip-hint" id="expToFig" aria-label="返回实物图面">返回实物图</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="dmask">
+  <div class="modal dmodal" role="dialog" aria-modal="true">
+    <button class="close" onclick="closeDetail()" aria-label="关闭">✕</button>
+    <h4 id="dTitle"></h4>
+    <div class="sub" id="dSub"></div>
+    <div id="dBody"></div>
+  </div>
+</div>
+
+<!-- 安装图放大灯箱：点击详情图飞出放大，支持二次缩放，遮罩图外区域 -->
+<div class="iglb" id="igLightbox" role="dialog" aria-modal="true" aria-label="安装图放大查看" aria-hidden="true">
+  <button type="button" class="iglb-close" id="iglbClose" onclick="IGlbClose()" aria-label="关闭大图">✕</button>
+  <div class="iglb-tip" id="iglbTip" aria-hidden="true">滚轮 / 双指缩放 · 拖动平移 · 双击复位 · Esc 关闭</div>
+  <div class="iglb-stage" id="iglbStage">
+    <img class="iglb-img" id="iglbImg" alt="安装总成图放大查看" draggable="false">
+  </div>
+  <div class="iglb-ctl" role="group" aria-label="缩放控制">
+    <button type="button" id="iglbZoomOut" onclick="IGlbZoom(-0.25)" aria-label="缩小">−</button>
+    <span class="iglb-pct" id="iglbPct" aria-live="polite">100%</span>
+    <button type="button" id="iglbZoomIn" onclick="IGlbZoom(0.25)" aria-label="放大">＋</button>
+    <button type="button" onclick="IGlbReset()" aria-label="还原到原始大小">还原</button>
+  </div>
+</div>
+
+
+
+</div>
+  
+  <!-- MAT_LIB_END --></section>
+
+      <!-- 模块二：课程体系（四大板块 × 16 子类 · 课程采集包驱动） -->
+      <section class="module" id="m-courses">
+        <div class="cl-crumb" id="curCrumb"></div>
+        <div class="grid" id="pathGrid"></div>
+        <div class="courses" id="coursePanel">
+          <div class="backrow" id="courseBack" role="button" tabindex="0">返回四大板块</div>
+          <div class="clist" id="courseList"></div>
+        </div>
+        <div class="cv" id="courseView"></div>
+      </section>
+
+      <!-- 模块三：考核练习 -->
+      <section class="module" id="m-exam">
+        <!-- B4-I2：明确阶段三示例数据边界，消除「规划中」标签与可点击练习的矛盾 -->
+        <div style="margin:0 0 12px;padding:10px 14px;border:1px solid rgba(180,83,9,.32);background:rgba(180,83,9,.08);border-radius:10px;font-size:13px;line-height:1.6;color:var(--s-warn,#B45309)">
+          <b>阶段三 · 示例数据</b>：本模块用于功能演示，顺序练习等作答与成绩<b>不作为正式考核、不计分</b>；正式题库与计分将在阶段三开放。
+        </div>
+        <div class="tabs" id="examTabs">
+          <div class="tab active" data-tab="quiz">顺序练习</div>
+          <div class="tab" data-tab="exam">模拟考试</div>
+          <div class="tab" data-tab="wrong">错题本</div>
+          <div class="tab" data-tab="board">成绩看板</div>
+        </div>
+        <div class="panel show" id="p-quiz"></div>
+        <div class="panel" id="p-exam"><div class="quiz"><div class="score"><div class="big">模拟考试 <span class="demo-badge">示例数据</span></div><div class="st">功能演示中：正式考试将从题库随机组卷、限时判分，成绩不计入考核。</div></div></div></div>
+        <div class="panel" id="p-wrong"><div class="quiz"><div class="score"><div class="big">错题本 <span class="demo-badge">示例数据</span></div><div class="st">功能演示中：正式上线后会自动归集错题，支持按知识点重练。</div></div></div></div>
+        <div class="panel" id="p-board">
+          <div class="board" id="board"></div>
+        </div>
+      </section>
+
+      <!-- 模块四：知识库问答 -->
+      <section class="module" id="m-kb">
+        <div class="qa">
+          <div class="qabox">
+            <div class="search">
+              <input id="qaInput" placeholder="问供水：如「DN100 球墨铸铁管怎么连接？」" aria-describedby="qaTip">
+              <button class="btn primary" id="qaBtn" disabled aria-disabled="true">提问</button>
+            </div>
+            <div class="qatip warn" id="qaTip">请输入问题关键词后提问，或从右侧知识分类点选</div>
+            <div class="answer" id="qaAnswer"></div>
+          </div>
+          <div class="kat">
+            <h4>知识分类（规划）<span class="demo-badge">示例数据 · 篇数虚标</span></h4>
+            <div class="kitem" data-q="球墨铸铁管" role="button" tabindex="0">国家标准与规范 <span class="n">12 篇</span></div>
+            <div class="kitem" data-q="阀门" role="button" tabindex="0">操作规程 SOP <span class="n">28 篇</span></div>
+            <div class="kitem" data-q="爆管" role="button" tabindex="0">事故案例库 <span class="n">9 篇</span></div>
+            <div class="kitem" data-q="水表" role="button" tabindex="0">常见 FAQ <span class="n">45 条</span></div>
+            <div class="kitem" data-q="阀门井" role="button" tabindex="0">厂家样本 <span class="n">30+</span></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- V28_MATDOM_START -->
+<div class="cl-mat-mask" id="clMatMask"></div>
+<div class="cl-mat" id="clMat" role="dialog" aria-modal="true" aria-labelledby="clMatTitle">
+  <div class="cl-mat-head">
+    <div>
+      <div class="cl-mat-kicker">材料卡 · 课程关联</div>
+      <h4 id="clMatTitle"></h4>
+      <div class="cl-mat-sub" id="clMatSub"></div>
+    </div>
+    <button class="cl-mat-close" id="clMatClose" aria-label="关闭">✕</button>
+  </div>
+  <div class="cl-mat-body" id="clMatBody"></div>
+</div>
+<!-- V28_MATDOM_END -->
+
+
+<!-- V28_GESTURE_START -->
+
+<!-- V28_GESTURE_END -->
+
+  <script src="static/curriculum.ad941a8930.js"></script>
+  <script src="static/materials.2c1c27dad0.js"></script>
+  <script src="static/app.11b95a3785.js"></script>
+</body>
+</html>
