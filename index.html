@@ -21,10 +21,10 @@
 <title>供水学习平台 · 全员学习与作业支持</title>
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function (e) {
-      console.warn('SW注册失败:', e);
-    });
+  // 不等 load：慢网络下 load 事件要十几秒才触发，会推迟 SW 注册与离线就绪。
+  // DOM 解析到此处即可注册，让 SW 尽早开始预缓存。
+  navigator.serviceWorker.register('sw.js').catch(function (e) {
+    console.warn('SW注册失败:', e);
   });
 }
 </script>
