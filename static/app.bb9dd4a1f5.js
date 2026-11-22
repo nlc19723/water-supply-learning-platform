@@ -1777,6 +1777,24 @@ const META={
   exam:{t:"考核练习",s:"题库 / 模拟考试 / 错题本 / 成绩看板（阶段三 · 示例数据）",pill:"阶段三 · 规划中",ok:false},
   kb:{t:"知识库 · AI 问答",s:"规范/案例/FAQ 入库，自然语言提问即答（阶段四 · 示例数据）",pill:"阶段四 · 规划中",ok:false}
 };
+/* 合版说明：课程体系内「课程分类库 / 练习题全库」子页切换。
+   与材料库 IG_mode 同构：切换时先退出课程详情学习态，避免沉浸遮罩残留；
+   同时把 URL 归一到 #courses（练习子页不单独占用路由段，刷新仍回本板块）。 */
+/* 页面加载最早期的子页快照：初始化 go('courses') 会把 cg_sub 重置为 lib，
+   故先缓存原值，供本页恢复逻辑使用（手动 F5 刷新）。 */
+var CG_INIT_SUB=(function(){try{return sessionStorage.getItem('cg_sub')||'';}catch(e){return '';}})();
+window.CG_mode=function(sub){
+  const practice=(sub==="practice");
+  const a=document.getElementById("cgTabLib"), b=document.getElementById("cgTabPractice");
+  if(a) a.setAttribute("aria-selected",practice?"false":"true");
+  if(b) b.setAttribute("aria-selected",practice?"true":"false");
+  const v1=document.getElementById("cgViewLib"), v2=document.getElementById("cgViewPractice");
+  if(v1) v1.classList.toggle("cg-on",!practice);
+  if(v2) v2.classList.toggle("cg-on",practice);
+  document.body.classList.remove("cv-immersive","cv-focus","cv-steps-open");
+  /* 记住子页选择：手动刷新（F5）不走 b4-state，用 sessionStorage 兜底恢复 */
+  try{ sessionStorage.setItem('cg_sub', practice?'practice':'lib'); }catch(e){}
+};
 const nav=document.querySelectorAll(".navitem");
 const mods=document.querySelectorAll(".module");
 /* 动态同步底部导航真实高度：小屏换行、系统大字体、iPhone 安全区都会改变导航高度 */
@@ -1801,7 +1819,11 @@ function resetMaterialOverlays(){
 /* B9：解析 #courses/<courseId>/<stepId> 深链；模块判断只看第一段，不影响既有路由语义 */
 function parseRoute(){
   const parts=location.hash.slice(1).split("/");
-  return {mod:META[parts[0]]?parts[0]:"materials",course:parts[1]||"",step:parts[2]||""};
+  let mod=META[parts[0]]?parts[0]:"materials";
+  /* 旧 #exam 深链归一到 courses 的练习子页 */
+  const sub=(mod==="exam")?"practice":"";
+  if(mod==="exam") mod="courses";
+  return {mod:mod,course:parts[1]||"",step:parts[2]||"",sub:sub};
 }
 /* V28_NAVGUARD · 根治移动端系统级侧滑返回（v2.26.0）
    背景：iOS Safari 的边缘侧滑返回是系统手势，优先于网页 touchmove 的 preventDefault，
@@ -1835,7 +1857,11 @@ function _ensureNavSentinel(){
 }
 function go(mod,opts){
   opts=opts||{};
-  __navCur={mod:mod,course:opts.course||"",step:opts.step||""};
+  /* 合版说明：考核练习并入课程体系，exam 作为 courses 的别名。
+     - 旧深链 #exam、材料卡「找练习」跳转、b4-state 里的 mod:"exam" 都落到本板块。
+     - 通过 sub 指定进入哪个子页（lib=课程分类库 / practice=练习题全库）。 */
+  if(mod==="exam"){ mod="courses"; opts.sub=opts.sub||"practice"; }
+  __navCur={mod:mod,course:opts.course||"",step:opts.step||"",sub:opts.sub||""};
   resetMaterialOverlays();
   if(window.CL_MAT_CLOSE) window.CL_MAT_CLOSE();   /* 切板块时关闭课程内材料卡 */
   document.body.classList.remove("cv-immersive");   /* 切板块时退出学习态沉浸 */
@@ -1845,6 +1871,12 @@ function go(mod,opts){
   document.body.classList.toggle("mat-full", mod==="materials");  // 材料库沉浸式全屏
   document.body.classList.toggle("cur-full", mod==="courses");  // 课程体系沉浸式：隐藏全局顶栏
   document.body.classList.toggle("plain-full", mod!=="materials");  // B10 非材料库板块去壳
+  /* 课程板块子页切换：默认课程分类库；带 sub=practice 时进练习题全库。
+     从别的板块切进来时清空学习态，回到板块底，避免残留课程详情覆盖子页。 */
+  if(mod==="courses"&&typeof window.CG_mode==="function"){
+    if(prevActive&&prevActive.id!=="m-courses"&&typeof window.CV_APPLY==="function") window.CV_APPLY("","");
+    window.CG_mode(opts.sub==="practice"?"practice":"lib");
+  }
   /* B10：.content 现在是各板块共用的滚动容器，切板块时归零，
      避免滚动位置串到新板块导致首张卡片顶部被切掉一半 */
   if(!prevActive||prevActive.id!=="m-"+mod){
@@ -1875,14 +1907,15 @@ window.addEventListener("popstate",()=>{
 window.addEventListener("hashchange",()=>{
   const r=parseRoute();
   const curMod=(document.querySelector(".module.active")||{}).id;
-  if(curMod!=="m-"+r.mod) go(r.mod,{fromPop:true,course:r.course,step:r.step});
+  if(curMod!=="m-"+r.mod) go(r.mod,{fromPop:true,course:r.course,step:r.step,sub:r.sub});
+  else if(r.sub) window.CG_mode && window.CG_mode(r.sub);
   else if(r.mod==="courses"&&typeof window.CV_APPLY==="function") window.CV_APPLY(r.course,r.step);
 });
 nav.forEach(n=>{
   n.addEventListener("click",()=>go(n.dataset.mod));
   n.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go(n.dataset.mod);}});
 });
-(function(){const r=parseRoute();go(r.mod,{init:true,course:r.course,step:r.step});})();
+(function(){const r=parseRoute();go(r.mod,{init:true,course:r.course,step:r.step,sub:r.sub});})();
 syncNav();
 window.addEventListener("resize",syncNav);
 window.addEventListener("orientationchange",()=>setTimeout(syncNav,120));
@@ -3267,21 +3300,41 @@ document.querySelectorAll(".kitem").forEach(k=>{
     try{localStorage.setItem(KEY,"1");}catch(e){}
     left=0; hide();
   });
+  /* V2.26.4：材料库下滑时临时收起引导条（不写 localStorage），
+     让 #mat-lib 从视口 0 起算，切换器吸顶到与课程体系相同的 top:0；
+     滚回顶部自动恢复。永久关闭（done）后不再干预。 */
+  var mlib=document.getElementById("mat-lib");
+  if(mlib) mlib.addEventListener("scroll",function(){
+    if(done||bar.hidden) return;
+    if(mlib.scrollTop>30) bar.classList.add("intro-scrolled");
+    else bar.classList.remove("intro-scrolled");
+  },{passive:true});
   requestAnimationFrame(run);
 })();
 /* ===== B4 · P1-15 刷新后恢复答题 / 筛选状态（配合版本轻提示） ===== */
 (function(){
   try{
     const raw=sessionStorage.getItem("b4-state");
-    if(!raw) return;
+    if(!raw){
+      /* 无 b4-state（手动 F5）：若停留在课程体系，用 cg_sub 恢复上次子页 */
+      try{
+        const cs=CG_INIT_SUB||sessionStorage.getItem('cg_sub');
+        const am=document.querySelector('.module.active');
+        /* 深链显式指定了 course 或 sub 时不覆盖（#courses/C01、#exam 优先） */
+        if(cs==='practice'&&am&&am.id==='m-courses'&&window.CG_mode&&!(__navCur&&__navCur.course)&&!(__navCur&&__navCur.sub)) window.CG_mode('practice');
+      }catch(e){}
+      return;
+    }
     sessionStorage.removeItem("b4-state");
     const st=JSON.parse(raw);
     /* 修复 M4：course/step 随 go 一并传入，由 go→CV_APPLY 在 courses 模块内恢复深链。
        不再无条件 CV_APPLY("")——空 course 会触发 showBoards() 并改 URL 为 #courses，
        覆盖刚 go 到的 exam/kb 模块，导致刷新后跳错模块、深链丢失。 */
-    const rmod=st.mod&&META[st.mod]?st.mod:"materials";
+    let rmod=st.mod&&META[st.mod]?st.mod:"materials";
     const rcourse=(st.route&&st.route.course)||"", rstep=(st.route&&st.route.step)||"";
-    go(rmod,{fromPop:true,course:rcourse,step:rstep});
+    let rsub=st.sub||"";
+    if(rmod==="exam"){ rmod="courses"; rsub=rsub||"practice"; }
+    go(rmod,{fromPop:true,course:rcourse,step:rstep,sub:rsub});
     if(st.quiz&&typeof qi!=="undefined"){qi=st.quiz.qi||0;score=st.quiz.score||0;renderQuiz();}
     if(st.filter){
       const q=document.getElementById("q"); if(q&&st.filter.q) q.value=st.filter.q;
@@ -3324,6 +3377,7 @@ if(window.MAT_HINTS) window.MAT_HINTS();
       try{
         S.setItem('b4-state',JSON.stringify({
           mod:parseRoute().mod,
+          sub:(document.getElementById('cgViewPractice')&&document.getElementById('cgViewPractice').classList.contains('cg-on'))?'practice':'',
           route:{course:parseRoute().course,step:parseRoute().step},
           quiz:{qi:(typeof qi!=='undefined'?qi:0),score:(typeof score!=='undefined'?score:0)},
           filter:{q:(document.getElementById('q')||{}).value||'',cur:(window.MAT_CUR?window.MAT_CUR():{cur:'全部',cur2:'全部'})}

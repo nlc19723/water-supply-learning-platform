@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2.26.2">
+<meta name="app-version" content="2.26.5">
 <link rel="icon" type="image/png" href="favicon.png">
 <!-- PWA 配置 -->
 <link rel="manifest" href="manifest.json">
@@ -91,6 +91,39 @@ if ('serviceWorker' in navigator) {
 
 
   <link rel="stylesheet" href="static/app.a73abab08c.css">
+  <style>
+  /* 合版说明：材料库「材料图库/安装图库」与课程体系「课程分类库/练习题全库」两个切换器
+     统一视觉——胶囊外框包住两个按钮、居中、加大一号、下滑吸顶固定；两板块吸顶后处于屏幕同一高度(top:0)。
+     覆盖样式置于 link 之后，特异性相同则后者胜出，无需改动带哈希的 app.css 文件名。 */
+  #m-courses .cg-seg, #mat-lib .ig-seg{
+    position:sticky;top:0;z-index:60;
+    display:flex;justify-content:center;align-items:center;gap:6px;
+    width:fit-content;max-width:calc(100% - 24px);box-sizing:border-box;
+    margin:6px auto 12px;padding:5px;border-radius:var(--r-pill,999px);
+    border:1px solid var(--s-line,#D9D4C7);
+    background:rgba(148,163,184,.16)}
+  #m-courses .cg-seg button, #mat-lib .ig-seg button{
+    font:inherit;font-size:var(--fs-3,16px);font-weight:var(--fw-b,700);cursor:pointer;
+    padding:10px 28px;min-width:118px;border:0;border-radius:var(--r-pill,999px);
+    background:transparent;color:var(--s-ink-2,var(--s-ink,#334155));
+    transition:background .2s,color .2s,box-shadow .2s;line-height:1.2;white-space:nowrap}
+  #m-courses .cg-seg button[aria-selected="true"],
+  #mat-lib .ig-seg button[aria-selected="true"]{
+    background:var(--s-brand,#0E554E);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.14)}
+  #m-courses .cg-seg button:focus-visible,
+  #mat-lib .ig-seg button:focus-visible{outline:2px solid #3b82f6;outline-offset:2px}
+  /* 进入课程详情学习态(沉浸)时隐藏子页切换器，返回列表自动恢复 */
+  body.cv-immersive #m-courses .cg-seg{display:none}
+  /* 材料库下滑时临时收起引导条，使 #mat-lib 从视口 0 起算，
+     切换器才能与课程体系一样吸顶到同一高度(top:0)；滚回顶部自动恢复 */
+  #introBar.intro-scrolled{display:none}
+  /* 材料库筛选栏(原 sticky top:0)让位给吸顶切换器，避免两者重叠 */
+  #mat-lib .filterbar{top:64px!important}
+  #m-courses .cg-view{display:none}
+  #m-courses .cg-view.cg-on{display:block;animation:fade .2s ease}
+  @media(max-width:520px){
+    #m-courses .cg-seg button,#mat-lib .ig-seg button{padding:10px 20px;min-width:106px;font-size:15px}}
+  </style>
 </head>
 <body>
 <!-- B1-DK16：键盘用户跳过导航直达内容 -->
@@ -114,16 +147,12 @@ if ('serviceWorker' in navigator) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
         <span>课程体系</span><span class="tag plan">试运行</span>
       </div>
-      <div class="navitem" data-mod="exam" role="tab" tabindex="0" aria-selected="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M9 7v-2h6v2M7 7h10a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><path d="m9.5 13 1.5 1.5 3-3.5"/></svg>
-        <span>考核练习</span><span class="tag plan">规划中</span>
-      </div>
       <div class="navitem" data-mod="kb" role="tab" tabindex="0" aria-selected="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
         <span>知识库问答</span><span class="tag plan">规划中</span>
       </div>
     </nav>
-    <div class="side-foot">版本 v2.26.2<br>© 供水公司培训中心</div>
+    <div class="side-foot">版本 v2.26.5<br>© 供水公司培训中心</div>
   </aside>
 
   <!-- 主区 -->
@@ -135,7 +164,7 @@ if ('serviceWorker' in navigator) {
         <div class="msub" id="topSub">供水材料的图鉴与认知 · 点卡片看大图与完整说明</div>
       </div>
       <div class="spacer"></div>
-      <span class="ver-chip" id="verChip">v2.26.2</span>
+      <span class="ver-chip" id="verChip">v2.26.5</span>
       <span class="pill ok" id="stagePill" role="status" data-state="ok">阶段一 · 已上线</span>
     </div>
     <div class="content" id="mainContent" tabindex="-1">
@@ -313,34 +342,44 @@ if ('serviceWorker' in navigator) {
   
   <!-- MAT_LIB_END --></section>
 
-      <!-- 模块二：课程体系（四大板块 × 16 子类 · 课程采集包驱动） -->
+      <!-- 模块二：课程体系（四大板块 × 16 子类 · 课程采集包驱动）
+           合版说明：原「考核练习」并入本板块，作为「练习题全库」子页；
+           原课程内容为「课程分类库」子页。切换方式同材料库的「材料图库/安装图库」。 -->
       <section class="module" id="m-courses">
-        <div class="cl-crumb" id="curCrumb"></div>
-        <div class="grid" id="pathGrid"></div>
-        <div class="courses" id="coursePanel">
-          <div class="backrow" id="courseBack" role="button" tabindex="0">返回四大板块</div>
-          <div class="clist" id="courseList"></div>
+        <div class="cg-seg" role="tablist" aria-label="课程体系子页切换">
+          <button type="button" role="tab" id="cgTabLib" aria-selected="true" onclick="CG_mode('lib')">课程分类库</button>
+          <button type="button" role="tab" id="cgTabPractice" aria-selected="false" onclick="CG_mode('practice')">练习题全库</button>
         </div>
-        <div class="cv" id="courseView"></div>
-      </section>
 
-      <!-- 模块三：考核练习 -->
-      <section class="module" id="m-exam">
-        <!-- B4-I2：明确阶段三示例数据边界，消除「规划中」标签与可点击练习的矛盾 -->
-        <div style="margin:0 0 12px;padding:10px 14px;border:1px solid rgba(180,83,9,.32);background:rgba(180,83,9,.08);border-radius:10px;font-size:13px;line-height:1.6;color:var(--s-warn,#B45309)">
-          <b>阶段三 · 示例数据</b>：本模块用于功能演示，顺序练习等作答与成绩<b>不作为正式考核、不计分</b>；正式题库与计分将在阶段三开放。
+        <!-- 子页 1：课程分类库（原课程体系内容） -->
+        <div class="cg-view cg-on" id="cgViewLib">
+          <div class="cl-crumb" id="curCrumb"></div>
+          <div class="grid" id="pathGrid"></div>
+          <div class="courses" id="coursePanel">
+            <div class="backrow" id="courseBack" role="button" tabindex="0">返回四大板块</div>
+            <div class="clist" id="courseList"></div>
+          </div>
+          <div class="cv" id="courseView"></div>
         </div>
-        <div class="tabs" id="examTabs">
-          <div class="tab active" data-tab="quiz">顺序练习</div>
-          <div class="tab" data-tab="exam">模拟考试</div>
-          <div class="tab" data-tab="wrong">错题本</div>
-          <div class="tab" data-tab="board">成绩看板</div>
-        </div>
-        <div class="panel show" id="p-quiz"></div>
-        <div class="panel" id="p-exam"><div class="quiz"><div class="score"><div class="big">模拟考试 <span class="demo-badge">示例数据</span></div><div class="st">功能演示中：正式考试将从题库随机组卷、限时判分，成绩不计入考核。</div></div></div></div>
-        <div class="panel" id="p-wrong"><div class="quiz"><div class="score"><div class="big">错题本 <span class="demo-badge">示例数据</span></div><div class="st">功能演示中：正式上线后会自动归集错题，支持按知识点重练。</div></div></div></div>
-        <div class="panel" id="p-board">
-          <div class="board" id="board"></div>
+
+        <!-- 子页 2：练习题全库（原考核练习内容） -->
+        <div class="cg-view" id="cgViewPractice">
+          <!-- B4-I2：明确阶段三示例数据边界，消除「规划中」标签与可点击练习的矛盾 -->
+          <div style="margin:0 0 12px;padding:10px 14px;border:1px solid rgba(180,83,9,.32);background:rgba(180,83,9,.08);border-radius:10px;font-size:13px;line-height:1.6;color:var(--s-warn,#B45309)">
+            <b>阶段三 · 示例数据</b>：本模块用于功能演示，顺序练习等作答与成绩<b>不作为正式考核、不计分</b>；正式题库与计分将在阶段三开放。
+          </div>
+          <div class="tabs" id="examTabs">
+            <div class="tab active" data-tab="quiz">顺序练习</div>
+            <div class="tab" data-tab="exam">模拟考试</div>
+            <div class="tab" data-tab="wrong">错题本</div>
+            <div class="tab" data-tab="board">成绩看板</div>
+          </div>
+          <div class="panel show" id="p-quiz"></div>
+          <div class="panel" id="p-exam"><div class="quiz"><div class="score"><div class="big">模拟考试 <span class="demo-badge">示例数据</span></div><div class="st">功能演示中：正式考试将从题库随机组卷、限时判分，成绩不计入考核。</div></div></div></div>
+          <div class="panel" id="p-wrong"><div class="quiz"><div class="score"><div class="big">错题本 <span class="demo-badge">示例数据</span></div><div class="st">功能演示中：正式上线后会自动归集错题，支持按知识点重练。</div></div></div></div>
+          <div class="panel" id="p-board">
+            <div class="board" id="board"></div>
+          </div>
         </div>
       </section>
 
@@ -392,6 +431,6 @@ if ('serviceWorker' in navigator) {
 
   <script src="static/curriculum.ad941a8930.js"></script>
   <script src="static/materials.2c1c27dad0.js"></script>
-  <script src="static/app.11b95a3785.js"></script>
+  <script src="static/app.bb9dd4a1f5.js"></script>
 </body>
 </html>
