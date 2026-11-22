@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2.26.5">
+<meta name="app-version" content="2.26.6">
 <link rel="icon" type="image/png" href="favicon.png">
 <!-- PWA 配置 -->
 <link rel="manifest" href="manifest.json">
@@ -93,10 +93,10 @@ if ('serviceWorker' in navigator) {
   <link rel="stylesheet" href="static/app.a73abab08c.css">
   <style>
   /* 合版说明：材料库「材料图库/安装图库」与课程体系「课程分类库/练习题全库」两个切换器
-     统一视觉——胶囊外框包住两个按钮、居中、加大一号、下滑吸顶固定；两板块吸顶后处于屏幕同一高度(top:0)。
+     统一视觉——胶囊外框包住两个按钮、居中、加大一号；随内容滚动，不吸顶固定。
      覆盖样式置于 link 之后，特异性相同则后者胜出，无需改动带哈希的 app.css 文件名。 */
   #m-courses .cg-seg, #mat-lib .ig-seg{
-    position:sticky;top:0;z-index:60;
+    position:relative;top:auto;z-index:auto;
     display:flex;justify-content:center;align-items:center;gap:6px;
     width:fit-content;max-width:calc(100% - 24px);box-sizing:border-box;
     margin:6px auto 12px;padding:5px;border-radius:var(--r-pill,999px);
@@ -114,11 +114,6 @@ if ('serviceWorker' in navigator) {
   #mat-lib .ig-seg button:focus-visible{outline:2px solid #3b82f6;outline-offset:2px}
   /* 进入课程详情学习态(沉浸)时隐藏子页切换器，返回列表自动恢复 */
   body.cv-immersive #m-courses .cg-seg{display:none}
-  /* 材料库下滑时临时收起引导条，使 #mat-lib 从视口 0 起算，
-     切换器才能与课程体系一样吸顶到同一高度(top:0)；滚回顶部自动恢复 */
-  #introBar.intro-scrolled{display:none}
-  /* 材料库筛选栏(原 sticky top:0)让位给吸顶切换器，避免两者重叠 */
-  #mat-lib .filterbar{top:64px!important}
   #m-courses .cg-view{display:none}
   #m-courses .cg-view.cg-on{display:block;animation:fade .2s ease}
   @media(max-width:520px){
@@ -152,7 +147,7 @@ if ('serviceWorker' in navigator) {
         <span>知识库问答</span><span class="tag plan">规划中</span>
       </div>
     </nav>
-    <div class="side-foot">版本 v2.26.5<br>© 供水公司培训中心</div>
+    <div class="side-foot">版本 v2.26.6<br>© 供水公司培训中心</div>
   </aside>
 
   <!-- 主区 -->
@@ -164,7 +159,7 @@ if ('serviceWorker' in navigator) {
         <div class="msub" id="topSub">供水材料的图鉴与认知 · 点卡片看大图与完整说明</div>
       </div>
       <div class="spacer"></div>
-      <span class="ver-chip" id="verChip">v2.26.5</span>
+      <span class="ver-chip" id="verChip">v2.26.6</span>
       <span class="pill ok" id="stagePill" role="status" data-state="ok">阶段一 · 已上线</span>
     </div>
     <div class="content" id="mainContent" tabindex="-1">
@@ -431,6 +426,6 @@ if ('serviceWorker' in navigator) {
 
   <script src="static/curriculum.ad941a8930.js"></script>
   <script src="static/materials.2c1c27dad0.js"></script>
-  <script src="static/app.bb9dd4a1f5.js"></script>
+  <script src="static/app.a8bd26e1b0.js"></script>
 </body>
 </html>

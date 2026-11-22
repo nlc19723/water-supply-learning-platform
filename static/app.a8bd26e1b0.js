@@ -3300,15 +3300,7 @@ document.querySelectorAll(".kitem").forEach(k=>{
     try{localStorage.setItem(KEY,"1");}catch(e){}
     left=0; hide();
   });
-  /* V2.26.4：材料库下滑时临时收起引导条（不写 localStorage），
-     让 #mat-lib 从视口 0 起算，切换器吸顶到与课程体系相同的 top:0；
-     滚回顶部自动恢复。永久关闭（done）后不再干预。 */
-  var mlib=document.getElementById("mat-lib");
-  if(mlib) mlib.addEventListener("scroll",function(){
-    if(done||bar.hidden) return;
-    if(mlib.scrollTop>30) bar.classList.add("intro-scrolled");
-    else bar.classList.remove("intro-scrolled");
-  },{passive:true});
+  /* 切换器已取消吸顶，引导条无需随滚动收起，始终保持可见 */
   requestAnimationFrame(run);
 })();
 /* ===== B4 · P1-15 刷新后恢复答题 / 筛选状态（配合版本轻提示） ===== */
@@ -3449,6 +3441,57 @@ if(window.MAT_HINTS) window.MAT_HINTS();
     var dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
     if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)) e.preventDefault();
   },{passive:false});
+})();
+
+/* 合版说明：板块内左右滑切换子页。
+   材料认知库：左滑 材料图库→安装图库、右滑 安装图库→材料图库（各自边界无反应）；
+   课程体系：左滑 课程分类库→练习题全库、右滑 练习题全库→课程分类库（边界无反应）。
+   严格约束：只调用 IG_mode / CG_mode 切本板块子页，绝不调用 go()，故手势不会跨板块。
+   与上方「手势锁定」共存：那段在 touchmove 里 preventDefault 横向滑动（防浏览器侧滑返回），
+   不影响 touchend；本段在 touchend 判定滑动方向并切换。 */
+(function(){
+  "use strict";
+  var HSW_OK=".path,.tabs,.tabs2,.nav,.filterbar .filterrow,.cv-steps,.cl-tbl-wrap"; /* 允许的横滑容器，起点在其内则不切子页 */
+  var sx=0,sy=0,st=0,active=false;
+  document.addEventListener("touchstart",function(e){
+    if(!e.touches||e.touches.length!==1){active=false;return;}
+    var t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();active=true;
+  },{passive:true});
+  document.addEventListener("touchend",function(e){
+    if(!active||!e.changedTouches||e.changedTouches.length!==1){active=false;return;}
+    active=false;
+    var t=e.changedTouches[0];
+    var dx=t.clientX-sx, dy=t.clientY-sy;
+    var adx=Math.abs(dx), ady=Math.abs(dy);
+    if(adx<60||adx<=ady*1.4) return;                 /* 需明确横向滑动 */
+    if(Date.now()-st>800) return;                    /* 过慢的拖动不算滑动 */
+    var target=e.target;
+    if(target&&target.closest){
+      if(target.closest(HSW_OK)) return;             /* 横滑容器（分类/步骤条等）交给原生横滑 */
+      if(target.closest("input,textarea,select,[contenteditable]")) return;
+      if(target.closest(".ig-seg,.cg-seg")) return;  /* 切换器本身点按不触发 */
+    }
+    /* 浮层/学习态/灯箱打开时不切子页（灯箱有自己的左右切图） */
+    if(window.OverlayManager&&window.OverlayManager.stack&&window.OverlayManager.stack.length>0) return;
+    if(document.body.classList.contains("cv-immersive")) return;
+    var left=dx<0;                                   /* 左滑=前进到下一子页，右滑=后退 */
+    var mod=document.querySelector(".module.active");
+    if(!mod) return;
+    if(mod.id==="m-materials"){
+      var gal=document.getElementById("igTabGallery");
+      var isGallery=gal&&gal.getAttribute("aria-selected")==="true";
+      if(left&&!isGallery&&typeof window.IG_mode==="function") window.IG_mode("gallery");
+      else if(!left&&isGallery&&typeof window.IG_mode==="function") window.IG_mode("single");
+      /* 边界：材料图库右滑、安装图库左滑 → 无反应 */
+    }else if(mod.id==="m-courses"){
+      var prac=document.getElementById("cgTabPractice");
+      var isPractice=prac&&prac.getAttribute("aria-selected")==="true";
+      if(left&&!isPractice&&typeof window.CG_mode==="function") window.CG_mode("practice");
+      else if(!left&&isPractice&&typeof window.CG_mode==="function") window.CG_mode("lib");
+      /* 边界：课程分类库右滑、练习题全库左滑 → 无反应 */
+    }
+    /* 其它板块（如知识库问答）不响应，手势不跨板块 */
+  },{passive:true});
 })();
 
 ;
