@@ -3443,54 +3443,136 @@ if(window.MAT_HINTS) window.MAT_HINTS();
   },{passive:false});
 })();
 
-/* 合版说明：板块内左右滑切换子页。
+/* 合版说明：板块内左右滑切换子页——「跟手阻尼平移 + 松手吸附翻页」（非瞬间切换）。
    材料认知库：左滑 材料图库→安装图库、右滑 安装图库→材料图库（各自边界无反应）；
    课程体系：左滑 课程分类库→练习题全库、右滑 练习题全库→课程分类库（边界无反应）。
    严格约束：只调用 IG_mode / CG_mode 切本板块子页，绝不调用 go()，故手势不会跨板块。
-   与上方「手势锁定」共存：那段在 touchmove 里 preventDefault 横向滑动（防浏览器侧滑返回），
-   不影响 touchend；本段在 touchend 判定滑动方向并切换。 */
+   与上方「手势锁定」共存：那段在 touchmove 里 preventDefault 横向滑动（防浏览器侧滑返回）；
+   本段在 touchmove 按阻尼实时平移当前子页，touchend 达阈值则「当前页滑出→切换→新页滑入」，
+   未达阈值回弹归位。浮层/学习态/输入控件/横滑容器/切换器均排除。 */
 (function(){
   "use strict";
-  var HSW_OK=".path,.tabs,.tabs2,.nav,.filterbar .filterrow,.cv-steps,.cl-tbl-wrap"; /* 允许的横滑容器，起点在其内则不切子页 */
-  var sx=0,sy=0,st=0,active=false;
+  var SWIPE_OK=".path,.tabs,.tabs2,.nav,.filterbar .filterrow,.cv-steps,.cl-tbl-wrap";
+  var DAMP=0.62, SLIDE_MS=260, EASE="cubic-bezier(.22,.61,.36,1)";
+  var sx=0,sy=0,st=0,active=false,decided=false,animating=false;
+  var mod=null,pair=null,dir=0,viewW=0;
+
+  function curView(m){
+    if(!m) return null;
+    if(m.id==="m-materials"){
+      var g=document.getElementById("igView");
+      return (g&&g.classList.contains("ig-on"))?g:document.getElementById("igSingle");
+    }
+    if(m.id==="m-courses"){
+      var p=document.getElementById("cgViewPractice");
+      return (p&&p.classList.contains("cg-on"))?p:document.getElementById("cgViewLib");
+    }
+    return null;
+  }
+  function getPair(m){
+    if(!m) return null;
+    if(m.id==="m-materials"){
+      var g=document.getElementById("igView"), s=document.getElementById("igSingle");
+      var isGal=!!(g&&g.classList.contains("ig-on"));
+      return {cur:isGal?g:s, next:isGal?s:g, nextSub:isGal?"single":"gallery",
+              atStart:!isGal, atEnd:isGal};   /* 材料图库=起点，安装图库=终点 */
+    }
+    if(m.id==="m-courses"){
+      var l=document.getElementById("cgViewLib"), p=document.getElementById("cgViewPractice");
+      var isPrac=!!(p&&p.classList.contains("cg-on"));
+      return {cur:isPrac?p:l, next:isPrac?l:p, nextSub:isPrac?"lib":"practice",
+              atStart:!isPrac, atEnd:isPrac};  /* 课程分类库=起点，练习题全库=终点 */
+    }
+    return null;
+  }
+  function excluded(t){
+    return !!(t&&t.closest&&(t.closest(SWIPE_OK)||
+      t.closest("input,textarea,select,[contenteditable]")||
+      t.closest(".ig-seg,.cg-seg")));
+  }
+  function unlocked(){
+    if(window.OverlayManager&&window.OverlayManager.stack&&window.OverlayManager.stack.length>0) return false;
+    if(document.body.classList.contains("cv-immersive")) return false;
+    return true;
+  }
+  function setX(el,x,animate){
+    if(!el) return;
+    el.style.transition=animate?("transform "+SLIDE_MS+"ms "+EASE):"none";
+    el.style.transform="translate3d("+(x||0)+"px,0,0)";
+  }
+  function clearX(el){ if(el){ el.style.transition=""; el.style.transform=""; } }
+  /* 回弹后清除 transform：避免 translate3d(0,0,0) 残留创建包含块，影响视图内 position:fixed 元素 */
+  function springBack(el){
+    if(!el) return;
+    setX(el,0,true);
+    setTimeout(function(){ if(!active&&!decided) clearX(el); }, SLIDE_MS+20);
+  }
+
   document.addEventListener("touchstart",function(e){
-    if(!e.touches||e.touches.length!==1){active=false;return;}
-    var t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();active=true;
+    if(animating||!e.touches||e.touches.length!==1){active=false;return;}
+    var t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();
+    active=true;decided=false;mod=null;pair=null;dir=0;viewW=0;
   },{passive:true});
-  document.addEventListener("touchend",function(e){
-    if(!active||!e.changedTouches||e.changedTouches.length!==1){active=false;return;}
-    active=false;
-    var t=e.changedTouches[0];
-    var dx=t.clientX-sx, dy=t.clientY-sy;
+
+  document.addEventListener("touchmove",function(e){
+    if(!active) return;
+    if(!e.touches||e.touches.length!==1){active=false;return;}
+    var t=e.touches[0], dx=t.clientX-sx, dy=t.clientY-sy;
     var adx=Math.abs(dx), ady=Math.abs(dy);
-    if(adx<60||adx<=ady*1.4) return;                 /* 需明确横向滑动 */
-    if(Date.now()-st>800) return;                    /* 过慢的拖动不算滑动 */
-    var target=e.target;
-    if(target&&target.closest){
-      if(target.closest(HSW_OK)) return;             /* 横滑容器（分类/步骤条等）交给原生横滑 */
-      if(target.closest("input,textarea,select,[contenteditable]")) return;
-      if(target.closest(".ig-seg,.cg-seg")) return;  /* 切换器本身点按不触发 */
+    if(decided){
+      if(e.cancelable) e.preventDefault();   /* 跟手平移时禁浏览器手势/原生滚动 */
+      var raw=dx*DAMP;
+      var tx=dir<0?Math.max(-viewW,Math.min(0,raw)):Math.min(viewW,Math.max(0,raw));
+      setX(pair&&pair.cur,tx,false);         /* 实时跟手，无过渡 */
+      return;
     }
-    /* 浮层/学习态/灯箱打开时不切子页（灯箱有自己的左右切图） */
-    if(window.OverlayManager&&window.OverlayManager.stack&&window.OverlayManager.stack.length>0) return;
-    if(document.body.classList.contains("cv-immersive")) return;
-    var left=dx<0;                                   /* 左滑=前进到下一子页，右滑=后退 */
-    var mod=document.querySelector(".module.active");
-    if(!mod) return;
-    if(mod.id==="m-materials"){
-      var gal=document.getElementById("igTabGallery");
-      var isGallery=gal&&gal.getAttribute("aria-selected")==="true";
-      if(left&&!isGallery&&typeof window.IG_mode==="function") window.IG_mode("gallery");
-      else if(!left&&isGallery&&typeof window.IG_mode==="function") window.IG_mode("single");
-      /* 边界：材料图库右滑、安装图库左滑 → 无反应 */
-    }else if(mod.id==="m-courses"){
-      var prac=document.getElementById("cgTabPractice");
-      var isPractice=prac&&prac.getAttribute("aria-selected")==="true";
-      if(left&&!isPractice&&typeof window.CG_mode==="function") window.CG_mode("practice");
-      else if(!left&&isPractice&&typeof window.CG_mode==="function") window.CG_mode("lib");
-      /* 边界：课程分类库右滑、练习题全库左滑 → 无反应 */
-    }
-    /* 其它板块（如知识库问答）不响应，手势不跨板块 */
+    if(ady>10&&ady>adx){active=false;return;}          /* 纵向滚动，交还原生 */
+    if(adx<10||adx<=ady*1.3) return;                    /* 尚未确认为横滑 */
+    if(excluded(e.target)||!unlocked()){active=false;return;}
+    var m=(e.target&&e.target.closest)?e.target.closest(".module"):null;
+    if(!m||(m.id!=="m-materials"&&m.id!=="m-courses")){active=false;return;}
+    var p=getPair(m);
+    if(!p||!p.cur){active=false;return;}
+    var left=dx<0;
+    if((left&&p.atEnd)||(!left&&p.atStart)){active=false;return;} /* 边界无反应 */
+    decided=true;mod=m;pair=p;dir=left?-1:1;
+    viewW=p.cur.getBoundingClientRect().width||m.getBoundingClientRect().width||window.innerWidth;
+    setX(p.cur,0,false);
+  },{passive:false});
+
+  document.addEventListener("touchend",function(e){
+    if(!active) return;
+    active=false;
+    if(!decided) return;
+    decided=false;
+    var cur=pair&&pair.cur;
+    if(!e.changedTouches||e.changedTouches.length!==1){clearX(cur);return;}
+    var t=e.changedTouches[0];
+    var dx=(t.clientX-sx)*DAMP, dt=Date.now()-st;
+    var moved=dir<0?-dx:dx;                            /* 合法方向位移为正 */
+    var threshold=Math.max(56,viewW*0.18);
+    var complete=moved>=threshold||(moved>=34&&dt<280);
+    if(!complete){springBack(cur);return;}             /* 未达阈值回弹 */
+    animating=true;
+    setX(cur,dir*viewW,true);                          /* 当前页滑出 */
+    setTimeout(function(){
+      if(mod.id==="m-materials"&&typeof window.IG_mode==="function") window.IG_mode(pair.nextSub);
+      else if(mod.id==="m-courses"&&typeof window.CG_mode==="function") window.CG_mode(pair.nextSub);
+      clearX(cur);                                     /* 旧页（现隐藏）清除残留变换 */
+      var nv=curView(mod);                             /* 新页 = 切换后的当前视图 */
+      if(nv){
+        setX(nv,-dir*viewW,false);                     /* 新页预置到反方向外侧 */
+        void nv.offsetWidth;                           /* 强制回流，确保起点生效 */
+        setX(nv,0,true);                               /* 新页滑入归位 */
+        setTimeout(function(){clearX(nv);animating=false;},SLIDE_MS+20);
+      }else{animating=false;}
+    },SLIDE_MS+10);
+  },{passive:true});
+
+  /* 系统打断（来电/切 App）时归位，避免视图卡在半途 */
+  document.addEventListener("touchcancel",function(){
+    if(decided&&pair&&pair.cur) springBack(pair.cur);
+    active=false;decided=false;
   },{passive:true});
 })();
 
