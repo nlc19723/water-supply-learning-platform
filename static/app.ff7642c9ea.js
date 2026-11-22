@@ -3443,19 +3443,20 @@ if(window.MAT_HINTS) window.MAT_HINTS();
   },{passive:false});
 })();
 
-/* 合版说明：板块内左右滑切换子页——「跟手阻尼平移 + 松手吸附翻页」（非瞬间切换）。
+/* 板块内左右滑切换子页——双页联动跟手翻页（iOS/Android 通用）。
    材料认知库：左滑 材料图库→安装图库、右滑 安装图库→材料图库（各自边界无反应）；
    课程体系：左滑 课程分类库→练习题全库、右滑 练习题全库→课程分类库（边界无反应）。
-   严格约束：只调用 IG_mode / CG_mode 切本板块子页，绝不调用 go()，故手势不会跨板块。
-   与上方「手势锁定」共存：那段在 touchmove 里 preventDefault 横向滑动（防浏览器侧滑返回）；
-   本段在 touchmove 按阻尼实时平移当前子页，touchend 达阈值则「当前页滑出→切换→新页滑入」，
-   未达阈值回弹归位。浮层/学习态/输入控件/横滑容器/切换器均排除。 */
+   严格约束：只调用 IG_mode / CG_mode 切本板块子页，绝不调用 go()，手势不跨板块。
+   跟手原理：手势开始时把「下一页」显示并绝对定位到当前页侧边，两页同步 translate3d；
+   下一页内容随手指逐渐进入视口，全程无空白；松手吸附或回弹，结束后清临时样式。
+   iOS/Android 适配：touch-action:pan-y 交横向手势给 JS；translate3d 走 GPU 合成；
+   touchmove 内不读取任何布局属性（尺寸在判定瞬间缓存一次），避免掉帧卡顿。 */
 (function(){
   "use strict";
   var SWIPE_OK=".path,.tabs,.tabs2,.nav,.filterbar .filterrow,.cv-steps,.cl-tbl-wrap";
-  var DAMP=0.62, SLIDE_MS=260, EASE="cubic-bezier(.22,.61,.36,1)";
-  var sx=0,sy=0,st=0,active=false,decided=false,animating=false;
-  var mod=null,pair=null,dir=0,viewW=0;
+  var SLIDE_MS=240, EASE="cubic-bezier(.22,.61,.36,1)";
+  var sx=0,sy=0,st=0,active=false,prepared=false,animating=false;
+  var mod=null,pair=null,dir=0,viewW=0,cur=null,next=null;
 
   function curView(m){
     if(!m) return null;
@@ -3495,87 +3496,103 @@ if(window.MAT_HINTS) window.MAT_HINTS();
     if(document.body.classList.contains("cv-immersive")) return false;
     return true;
   }
-  function setX(el,x,animate){
+  /* 显示/隐藏一个子页：沿用各板块原有的 display 控制方式 */
+  function showPage(el,m,show){
     if(!el) return;
-    el.style.transition=animate?("transform "+SLIDE_MS+"ms "+EASE):"none";
-    el.style.transform="translate3d("+(x||0)+"px,0,0)";
+    if(m==="m-courses") el.classList.toggle("cg-on",show);
+    else if(el.id==="igView") el.classList.toggle("ig-on",show);
+    else el.style.display=show?"":"none";
+    if(show) el.style.animation="none";   /* 覆盖 cg-on 自带 fade，避免手势期间闪烁 */
   }
-  function clearX(el){ if(el){ el.style.transition=""; el.style.transform=""; } }
-  /* 回弹后清除 transform：避免 translate3d(0,0,0) 残留创建包含块，影响视图内 position:fixed 元素 */
-  function springBack(el){
+  /* 清除手势期间写入的临时样式，让视图回到原本的 display 控制 */
+  function clearTemp(el){
     if(!el) return;
-    setX(el,0,true);
-    setTimeout(function(){ if(!active&&!decided) clearX(el); }, SLIDE_MS+20);
+    ["position","top","left","width","margin","zIndex","transform","transition","animation","willChange"].forEach(function(p){ el.style[p]=""; });
+  }
+  function reset(){
+    active=false;prepared=false;mod=null;pair=null;cur=null;next=null;dir=0;viewW=0;
   }
 
   document.addEventListener("touchstart",function(e){
     if(animating||!e.touches||e.touches.length!==1){active=false;return;}
     var t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();
-    active=true;decided=false;mod=null;pair=null;dir=0;viewW=0;
+    active=true;prepared=false;mod=null;pair=null;cur=null;next=null;
   },{passive:true});
 
   document.addEventListener("touchmove",function(e){
     if(!active) return;
-    if(!e.touches||e.touches.length!==1){active=false;return;}
+    if(!e.touches||e.touches.length!==1){ if(prepared) finish(false); return; }
     var t=e.touches[0], dx=t.clientX-sx, dy=t.clientY-sy;
     var adx=Math.abs(dx), ady=Math.abs(dy);
-    if(decided){
-      if(e.cancelable) e.preventDefault();   /* 跟手平移时禁浏览器手势/原生滚动 */
-      var raw=dx*DAMP;
-      var tx=dir<0?Math.max(-viewW,Math.min(0,raw)):Math.min(viewW,Math.max(0,raw));
-      setX(pair&&pair.cur,tx,false);         /* 实时跟手，无过渡 */
+
+    if(prepared){
+      if(e.cancelable) e.preventDefault();      /* 禁原生横向滚动/侧滑返回 */
+      var tx=dir<0?Math.max(-viewW,Math.min(0,dx)):Math.min(viewW,Math.max(0,dx));
+      var s="translate3d("+tx+"px,0,0)";
+      cur.style.transform=s;
+      next.style.transform=s;                  /* 两页同步跟手，下一页逐渐露出 */
       return;
     }
-    if(ady>10&&ady>adx){active=false;return;}          /* 纵向滚动，交还原生 */
-    if(adx<10||adx<=ady*1.3) return;                    /* 尚未确认为横滑 */
+    if(ady>10&&ady>adx){active=false;return;}   /* 纵向滚动交还原生 */
+    if(adx<10||adx<=ady*1.3) return;             /* 尚未确认为横滑 */
     if(excluded(e.target)||!unlocked()){active=false;return;}
     var m=(e.target&&e.target.closest)?e.target.closest(".module"):null;
     if(!m||(m.id!=="m-materials"&&m.id!=="m-courses")){active=false;return;}
     var p=getPair(m);
-    if(!p||!p.cur){active=false;return;}
+    if(!p||!p.cur||!p.next){active=false;return;}
     var left=dx<0;
     if((left&&p.atEnd)||(!left&&p.atStart)){active=false;return;} /* 边界无反应 */
-    decided=true;mod=m;pair=p;dir=left?-1:1;
-    viewW=p.cur.getBoundingClientRect().width||m.getBoundingClientRect().width||window.innerWidth;
-    setX(p.cur,0,false);
+
+    /* 判定瞬间缓存一次布局尺寸，后续 touchmove 只读缓存，杜绝 reflow 卡顿 */
+    cur=p.cur;next=p.next;mod=m;pair=p;dir=left?-1:1;
+    var r=cur.getBoundingClientRect();
+    viewW=r.width||window.innerWidth;
+    var top=cur.offsetTop, leftPos=cur.offsetLeft;
+    showPage(next,m.id,true);
+    next.style.position="absolute";
+    next.style.top=top+"px";
+    next.style.left=(leftPos+(left?viewW:-viewW))+"px";  /* 初始停在侧边一屏外 */
+    next.style.width=viewW+"px";
+    next.style.margin="0";
+    cur.style.willChange="transform";next.style.willChange="transform";
+    cur.style.transition="none";next.style.transition="none";
+    cur.style.transform="translate3d(0,0,0)";next.style.transform="translate3d(0,0,0)";
+    if(e.cancelable) e.preventDefault();
+    prepared=true;active=true;
   },{passive:false});
 
-  document.addEventListener("touchend",function(e){
-    if(!active) return;
-    active=false;
-    if(!decided) return;
-    decided=false;
-    var cur=pair&&pair.cur;
-    if(!e.changedTouches||e.changedTouches.length!==1){clearX(cur);return;}
-    var t=e.changedTouches[0];
-    var dx=(t.clientX-sx)*DAMP, dt=Date.now()-st;
-    var moved=dir<0?-dx:dx;                            /* 合法方向位移为正 */
-    var threshold=Math.max(56,viewW*0.18);
-    var complete=moved>=threshold||(moved>=34&&dt<280);
-    if(!complete){springBack(cur);return;}             /* 未达阈值回弹 */
+  function finish(complete){
+    if(!prepared) return;
     animating=true;
-    setX(cur,dir*viewW,true);                          /* 当前页滑出 */
+    var target=complete?dir*viewW:0;
+    var tr="transform "+SLIDE_MS+"ms "+EASE;
+    cur.style.transition=tr;next.style.transition=tr;
+    cur.style.transform="translate3d("+target+"px,0,0)";
+    next.style.transform="translate3d("+target+"px,0,0)";
     setTimeout(function(){
-      if(mod.id==="m-materials"&&typeof window.IG_mode==="function") window.IG_mode(pair.nextSub);
-      else if(mod.id==="m-courses"&&typeof window.CG_mode==="function") window.CG_mode(pair.nextSub);
-      clearX(cur);                                     /* 旧页（现隐藏）清除残留变换 */
-      var nv=curView(mod);                             /* 新页 = 切换后的当前视图 */
-      if(nv){
-        setX(nv,-dir*viewW,false);                     /* 新页预置到反方向外侧 */
-        void nv.offsetWidth;                           /* 强制回流，确保起点生效 */
-        setX(nv,0,true);                               /* 新页滑入归位 */
-        setTimeout(function(){clearX(nv);animating=false;},SLIDE_MS+20);
-      }else{animating=false;}
-    },SLIDE_MS+10);
+      clearTemp(cur);clearTemp(next);
+      if(complete){
+        /* 正式切到目标子页：IG_mode/CG_mode 统一设置 display 与 aria 选中态 */
+        if(mod.id==="m-materials"&&typeof window.IG_mode==="function") window.IG_mode(pair.nextSub);
+        else if(mod.id==="m-courses"&&typeof window.CG_mode==="function") window.CG_mode(pair.nextSub);
+      }else{
+        showPage(next,mod.id,false);            /* 回弹：下一页恢复隐藏 */
+      }
+      reset();animating=false;
+    },SLIDE_MS+20);
+  }
+
+  document.addEventListener("touchend",function(e){
+    if(!prepared) return;
+    if(!e.changedTouches||e.changedTouches.length!==1){finish(false);return;}
+    var dx=e.changedTouches[0].clientX-sx, dt=Date.now()-st;
+    var moved=dir<0?-dx:dx;
+    var th=Math.max(56,viewW*0.18);
+    finish(moved>=th||(moved>=34&&dt<280));
   },{passive:true});
 
-  /* 系统打断（来电/切 App）时归位，避免视图卡在半途 */
-  document.addEventListener("touchcancel",function(){
-    if(decided&&pair&&pair.cur) springBack(pair.cur);
-    active=false;decided=false;
-  },{passive:true});
+  document.addEventListener("touchcancel",function(){ finish(false); },{passive:true});
 })();
-
 ;
 /* V3_JS_START */
 /* ⚠ 生成区｜sync_v3.py ← v3_full.js · 请勿手改 index.html，请改 v3_full.js */
