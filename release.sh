@@ -90,6 +90,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
   grep -n -E "app-version|版本 v|verChip|water-learn-v|\"v\"" index.html version.json sw.js | grep "$CUR" || true
   grep -n "water-learn-assets" sw.js || true
   echo "[dry-run] 资产缓存指纹占位 → water-learn-assets-$ASSET_FP"
+  echo "[dry-run] 图片预缓存清单 → 自动扫描 images/ 重建（当前 $(find images -type f | wc -l) 张）"
   echo "[dry-run] 不写文件、不发布。"
   exit 0
 fi
@@ -136,6 +137,25 @@ s2, n = re.subn(r"const ASSETS_CACHE = 'water-learn-assets-[0-9A-Fa-fX]{8}';", n
 assert n == 1, f'sw.js 中资产缓存锚点命中 {n} 次（应为 1），已中止'
 open(p, 'w', encoding='utf-8').write(s2)
 print(f'  ✓ sw.js: 资产缓存指纹 -> water-learn-assets-{fp}')
+PY
+
+# 5b) 自动重建图片预缓存清单：扫描 images/ 全部文件写入 sw.js 的 IMAGE_CORE。
+#     以后替换/新增图片后发版，新图自动进预缓存，离线可用不会缺图。
+python3.11 - "$DIR" <<'PY'
+import sys, os, re
+d = sys.argv[1]
+imgs = sorted(
+    './' + p.relative_to(d).as_posix()   # 相对站点根：images/xxx.jpg → ./images/xxx.jpg
+    for p in __import__('pathlib').Path(d, 'images').rglob('*') if p.is_file()
+)
+assert len(imgs) >= 1, 'images/ 无图片，异常'
+block = "const IMAGE_CORE = [\n" + "\n".join(f"  '{u}'," for u in imgs) + "\n];"
+p = os.path.join(d, 'sw.js')
+s = open(p, encoding='utf-8').read()
+s2, n = re.subn(r"const IMAGE_CORE = \[[\s\S]*?\n\];", block, s, count=1)
+assert n == 1, f'sw.js 中 IMAGE_CORE 锚点命中 {n} 次（应为 1）'
+open(p, 'w', encoding='utf-8').write(s2)
+print(f'  ✓ sw.js: 图片预缓存清单已同步为 {len(imgs)} 张')
 PY
 
 # 6) 校验无残留旧版本号（-F 固定字符串匹配：'.' 不能当通配符，否则会误命中日期 2026-11-19）

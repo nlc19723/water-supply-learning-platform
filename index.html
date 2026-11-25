@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2.26.8">
+<meta name="app-version" content="2.26.44">
 <link rel="icon" type="image/png" href="favicon.png">
 <!-- PWA 配置 -->
 <link rel="manifest" href="manifest.json">
@@ -93,7 +93,7 @@ if ('serviceWorker' in navigator) {
   <link rel="stylesheet" href="static/app.a73abab08c.css">
   <style>
   /* 合版说明：材料库「材料图库/安装图库」与课程体系「课程分类库/练习题全库」两个切换器
-     统一视觉——胶囊外框包住两个按钮、居中、加大一号；随内容滚动，不吸顶固定。
+     统一视觉——胶囊外框包住两个按钮、居中、加大一号；移动端随内容滚动不吸顶；桌面端下滑吸顶固定（见下方 media 规则）。
      覆盖样式置于 link 之后，特异性相同则后者胜出，无需改动带哈希的 app.css 文件名。 */
   #m-courses .cg-seg, #mat-lib .ig-seg{
     position:relative;top:auto;z-index:auto;
@@ -127,14 +127,104 @@ if ('serviceWorker' in navigator) {
   @media(hover:hover) and (pointer:fine){
     html,body{-webkit-user-select:none;user-select:none}
     input,textarea,select,[contenteditable]{-webkit-user-select:text;user-select:text}
+    /* 桌面端：两个子页切换器下滑吸顶（滚动容器是各自 .module，top:0 贴内容区顶部）。
+       移动端保持随内容滚动不吸顶，避免与板块内左右滑手势 / 跨页高度冲突。
+       学习态隐藏（课程 body.cv-immersive .cg-seg / 材料 IG_chrome 内联 display:none）优先级更高，仍会隐藏。 */
+    #m-courses .cg-seg,#mat-lib .ig-seg{
+      position:sticky;top:0;z-index:20;
+      -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
   }
   @media(max-width:520px){
     #m-courses .cg-seg button,#mat-lib .ig-seg button{padding:10px 20px;min-width:106px;font-size:15px}}
+
+  /* ===== 功能实验区 ===== */
+  #m-lab{position:relative}
+  /* .content 是 flex 容器：让功能区 active 时占满可用高度，供工具舞台 inset:0 铺满
+     与 #m-materials.active 同构：display:flex + flex:1 + min-height:0 */
+  #m-lab.active{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}
+  .lab-wrap{max-width:var(--content-max);margin:0 auto}
+  .lab-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}
+  .lab-head h3{font-size:var(--fs-5);font-weight:var(--fw-b);color:var(--s-ink);margin:0 0 6px}
+  .lab-head p{font-size:var(--fs-3);color:var(--s-ink-2);margin:0;line-height:var(--lh-body)}
+  .lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  .lab-card{display:flex;align-items:center;gap:16px;text-align:left;width:100%;
+    background:var(--s-surface);border:1px solid var(--s-line);border-radius:var(--r-md);
+    padding:20px;cursor:pointer;color:var(--s-ink);font-family:inherit;
+    box-shadow:0 1px 2px rgba(16,32,58,.05),0 2px 6px rgba(16,32,58,.04);
+    transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+  .lab-card:hover{transform:translateY(-3px);border-color:var(--s-accent);
+    box-shadow:0 4px 8px rgba(16,32,58,.08),0 16px 36px rgba(16,32,58,.1)}
+  .lab-card:active{transform:translateY(-1px)}
+  .lab-card:focus-visible{outline:2px solid var(--s-brand);outline-offset:3px}
+  .lab-ico{flex:0 0 56px;width:56px;height:56px;border-radius:var(--r-md);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--s-brand);background:var(--s-accent-soft)}
+  .lab-ico svg{width:32px;height:32px}
+  .lab-body{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+  .lab-name{font-size:var(--fs-4);font-weight:var(--fw-b);color:var(--s-ink)}
+  .lab-desc{font-size:var(--fs-2);color:var(--s-ink-2);line-height:var(--lh-body)}
+  .lab-go{flex:0 0 auto;color:var(--s-ink-3);display:flex;align-items:center;transition:transform .16s ease,color .16s ease}
+  .lab-go svg{width:18px;height:18px}
+  .lab-card:hover .lab-go{color:var(--s-brand);transform:translateX(3px)}
+  /* 工具承载层 */
+  .lab-stage{position:absolute;inset:0;display:flex;flex-direction:column;
+    background:var(--s-paper);z-index:5}
+  .lab-stage[hidden]{display:none}
+  .lab-stage-bar{display:flex;align-items:center;gap:14px;padding:10px 16px;
+    background:var(--s-surface);border-bottom:1px solid var(--s-line);flex:0 0 auto}
+  .lab-back,.lab-opennew{display:inline-flex;align-items:center;gap:6px;
+    background:transparent;border:1px solid var(--s-line);border-radius:var(--r-sm);
+    color:var(--s-ink-2);font-family:inherit;font-size:var(--fs-3);font-weight:var(--fw-m);
+    padding:8px 12px;cursor:pointer;transition:.15s}
+  .lab-back:hover,.lab-opennew:hover{color:var(--s-brand);border-color:var(--s-brand);background:var(--s-accent-soft)}
+  .lab-back svg,.lab-opennew svg{width:16px;height:16px}
+  .lab-opennew{padding:8px}
+  .lab-stage-title{font-size:var(--fs-3);font-weight:var(--fw-b);color:var(--s-ink)}
+  /* 工具 iframe 缓存：每个工具一个 frame，切换仅显隐、不销毁 src，避免重复加载闪烁 */
+  .lab-frame{flex:1 1 0;min-height:0;width:100%;border:0;background:var(--s-surface);display:block}
+  .lab-frame[hidden]{display:none}
+  /* 工具打开时移动端隐藏底部导航，舞台铺满整屏（对齐 cv-immersive 处理） */
+  @media(max-width:860px){
+    body.lab-tool-open .sidebar{display:none}
+    body.lab-tool-open .main{height:100vh}
+  }
+  /* 知识库问答 / 功能实验区：与材料库、课程体系同构，隐藏顶栏 + 去掉父容器留白 */
+  body.zone-full .topbar{display:none}
+  body.zone-full .content{padding:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  body.zone-full .module.active:not(#m-materials){max-width:none;width:100%;margin-inline:0;padding:0;overflow:visible}
+  @media(min-width:861px){ body.zone-full .content{padding:0 var(--page-gutter)} }
+  /* 顶栏隐藏后由板块自身接管刘海安全区（对齐材料库 exp-head / 课程 cv-bar 的处理） */
+  body.zone-full .module.active:not(#m-materials){padding-top:env(safe-area-inset-top,0px)}
+  /* 工具舞台整体下移避开刘海；占位层同步跟随返回栏高度 */
+  body.zone-full .lab-stage{padding-top:env(safe-area-inset-top,0px)}
+  body.zone-full .lab-fallback{inset:calc(59px + env(safe-area-inset-top,0px)) 0 0}
+  .lab-fallback{position:absolute;inset:59px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;background:var(--s-paper);color:var(--s-ink-2);text-align:center;padding:24px}
+  .lab-fallback[hidden]{display:none}
+  .lab-fallback-icon{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--s-brand);background:var(--s-accent-soft);margin-bottom:4px}
+  .lab-fallback-icon svg{width:28px;height:28px}
+  .lab-fallback p{font-size:var(--fs-4);font-weight:var(--fw-b);color:var(--s-ink);margin:0}
+  .lab-fallback span{font-size:var(--fs-2);margin:0}
+  .lab-fallback button{margin-top:8px;font-family:inherit;font-size:var(--fs-3);font-weight:var(--fw-m);
+    color:var(--s-on-brand);background:var(--s-brand);border:0;border-radius:var(--r-sm);padding:10px 20px;cursor:pointer}
+  .lab-fallback button:hover{background:var(--s-brand-deep)}
+  @media(max-width:520px){
+    .lab-head{flex-direction:column;gap:10px}
+    .lab-grid{grid-template-columns:1fr}
+    .lab-card{padding:16px}
+  }
+  /* 行话兜底建议：口语查不到材料时给的「你是不是想找」，浅蓝底突出但沿用品牌色 */
+  .empty-cross.slang-tip{background:var(--s-accent-soft,#E7F0FC);border:1px solid var(--s-line,#E2E8F0);
+    border-radius:var(--r-sm,10px);padding:10px 14px;color:var(--s-ink,#1E293B)}
+  .empty-cross.slang-tip a{color:var(--s-brand,#0B5CAD)}
   </style>
 </head>
 <body>
 <!-- B1-DK16：键盘用户跳过导航直达内容 -->
 <a class="skip-link" href="#mainContent">跳转到主要内容</a>
+<!-- W3/S7：子页切换（点击/键盘/手势）后向屏幕阅读器播报当前子页名 -->
+<div id="subpageLive" role="status" aria-live="polite" aria-atomic="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0"></div>
 <div class="app">
   <!-- 侧边导航 -->
   <aside class="sidebar">
@@ -158,8 +248,12 @@ if ('serviceWorker' in navigator) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
         <span>知识库问答</span><span class="tag plan">规划中</span>
       </div>
+      <div class="navitem" data-mod="lab" role="tab" tabindex="0" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L4.6 18a2 2 0 0 0 1.7 3h11.4a2 2 0 0 0 1.7-3L14 9.5V3"/><path d="M7.5 15h9"/></svg>
+        <span>功能实验区</span><span class="tag plan">实验中</span>
+      </div>
     </nav>
-    <div class="side-foot">版本 v2.26.8<br>© 供水公司培训中心</div>
+    <div class="side-foot">版本 v2.26.44<br>© 供水公司培训中心</div>
   </aside>
 
   <!-- 主区 -->
@@ -171,7 +265,7 @@ if ('serviceWorker' in navigator) {
         <div class="msub" id="topSub">供水材料的图鉴与认知 · 点卡片看大图与完整说明</div>
       </div>
       <div class="spacer"></div>
-      <span class="ver-chip" id="verChip">v2.26.8</span>
+      <span class="ver-chip" id="verChip">v2.26.44</span>
       <span class="pill ok" id="stagePill" role="status" data-state="ok">阶段一 · 已上线</span>
     </div>
     <div class="content" id="mainContent" tabindex="-1">
@@ -197,12 +291,12 @@ if ('serviceWorker' in navigator) {
 <div class="wrap">
   <!-- 安装图库 / 单件材料 视图切换（手写稳定区） -->
   <div class="ig-seg" role="tablist" aria-label="认知视图切换">
-    <button role="tab" id="igTabSingle" aria-selected="true" onclick="IG_mode('single')">材料图库</button>
-    <button role="tab" id="igTabGallery" aria-selected="false" onclick="IG_mode('gallery')">安装图库</button>
+    <button role="tab" id="igTabSingle" aria-selected="true" aria-controls="igSingle" tabindex="0" onclick="IG_mode('single')">材料图库</button>
+    <button role="tab" id="igTabGallery" aria-selected="false" aria-controls="igView" tabindex="-1" onclick="IG_mode('gallery')">安装图库</button>
   </div>
 
   <!-- 安装图库视图 -->
-  <div id="igView">
+  <div id="igView" role="tabpanel" aria-labelledby="igTabGallery" tabindex="0">
     <div class="ig-lead" id="igLead">将材料按真实安装组合成「总成」认知：<b>点击总成卡片</b>进入详情页，图中编号与部件表<b>双向联动</b>，点部件名可跳转到对应材料卡。图中标注为示意，具体型号以现场实际配置为准。</div>
     <div class="ig-grid" id="igGrid"></div>
     <!-- 总成详情页（页面内视图，非弹窗） -->
@@ -251,7 +345,7 @@ if ('serviceWorker' in navigator) {
   </div>
 
   <!-- 单件材料视图（原有内容包裹，默认显示） -->
-  <div id="igSingle">
+  <div id="igSingle" role="tabpanel" aria-labelledby="igTabSingle" tabindex="0">
   <div class="banner"><span class="ok-badge">✓</span> <b>分类已细化</b>：7 大类 / 二级 / 三级 / 型号级；<b>点击一级只显示其下二级</b>（不跨类），阀门细分至型号级（明杆/暗杆闸阀、复合/快速/微量排气阀、浮动/固定球阀等）｜ 现有 108 项材料、多数配实物图，<b>正文术语悬停即见解释</b>；键盘可用 Tab/Enter 切换分类。</div>
 
   <div class="progress">
@@ -354,12 +448,12 @@ if ('serviceWorker' in navigator) {
            原课程内容为「课程分类库」子页。切换方式同材料库的「材料图库/安装图库」。 -->
       <section class="module" id="m-courses">
         <div class="cg-seg" role="tablist" aria-label="课程体系子页切换">
-          <button type="button" role="tab" id="cgTabLib" aria-selected="true" onclick="CG_mode('lib')">课程分类库</button>
-          <button type="button" role="tab" id="cgTabPractice" aria-selected="false" onclick="CG_mode('practice')">练习题全库</button>
+          <button type="button" role="tab" id="cgTabLib" aria-selected="true" aria-controls="cgViewLib" tabindex="0" onclick="CG_mode('lib')">课程分类库</button>
+          <button type="button" role="tab" id="cgTabPractice" aria-selected="false" aria-controls="cgViewPractice" tabindex="-1" onclick="CG_mode('practice')">练习题全库</button>
         </div>
 
         <!-- 子页 1：课程分类库（原课程体系内容） -->
-        <div class="cg-view cg-on" id="cgViewLib">
+        <div class="cg-view cg-on" id="cgViewLib" role="tabpanel" aria-labelledby="cgTabLib" tabindex="0">
           <div class="cl-crumb" id="curCrumb"></div>
           <div class="grid" id="pathGrid"></div>
           <div class="courses" id="coursePanel">
@@ -370,7 +464,7 @@ if ('serviceWorker' in navigator) {
         </div>
 
         <!-- 子页 2：练习题全库（原考核练习内容） -->
-        <div class="cg-view" id="cgViewPractice">
+        <div class="cg-view" id="cgViewPractice" role="tabpanel" aria-labelledby="cgTabPractice" tabindex="0">
           <!-- B4-I2：明确阶段三示例数据边界，消除「规划中」标签与可点击练习的矛盾 -->
           <div style="margin:0 0 12px;padding:10px 14px;border:1px solid rgba(180,83,9,.32);background:rgba(180,83,9,.08);border-radius:10px;font-size:13px;line-height:1.6;color:var(--s-warn,#B45309)">
             <b>阶段三 · 示例数据</b>：本模块用于功能演示，顺序练习等作答与成绩<b>不作为正式考核、不计分</b>；正式题库与计分将在阶段三开放。
@@ -412,6 +506,126 @@ if ('serviceWorker' in navigator) {
         </div>
       </section>
 
+      <!-- 模块五：功能实验区（可扩展的小工具入口网格） -->
+      <section class="module" id="m-lab">
+        <div class="lab-wrap">
+          <div class="lab-head">
+            <div>
+              <h3>实验工具</h3>
+              <p>面向一线作业的小工具，持续补充中。点击卡片即可打开使用。</p>
+            </div>
+            <span class="demo-badge">实验功能 · 试用中</span>
+          </div>
+          <div class="lab-grid" id="labGrid">
+            <!-- 口径计算器 -->
+            <button type="button" class="lab-card" data-tool="calc" aria-label="打开口径计算器">
+              <span class="lab-ico" aria-hidden="true">
+                <svg viewBox="0 0 32 32" fill="none">
+                  <rect x="5" y="3" width="22" height="26" rx="4" fill="currentColor" opacity=".08"/>
+                  <rect x="5" y="3" width="22" height="26" rx="4" stroke="currentColor" stroke-width="1.8"/>
+                  <rect x="9" y="7" width="14" height="5.5" rx="1.6" fill="currentColor" opacity=".16"/>
+                  <path d="M18.5 9.7h2.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  <g fill="currentColor">
+                    <circle cx="10.5" cy="17" r="1.7"/><circle cx="16" cy="17" r="1.7"/><circle cx="21.5" cy="17" r="1.7"/>
+                    <circle cx="10.5" cy="22" r="1.7"/><circle cx="16" cy="22" r="1.7"/><circle cx="21.5" cy="22" r="1.7"/>
+                  </g>
+                </svg>
+              </span>
+              <span class="lab-body">
+                <span class="lab-name">口径计算器</span>
+                <span class="lab-desc">管材口径、壁厚与流量快速换算</span>
+              </span>
+              <span class="lab-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </span>
+            </button>
+            <!-- 行话对照 -->
+            <button type="button" class="lab-card" data-tool="slang" aria-label="打开行话对照">
+              <span class="lab-ico" aria-hidden="true">
+                <svg viewBox="0 0 32 32" fill="none">
+                  <path d="M6 5h13a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3H11l-5 4V8a3 3 0 0 1 3-3Z" fill="currentColor" opacity=".10"/>
+                  <path d="M6 5h13a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3H11l-5 4V8a3 3 0 0 1 3-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M10 11h9M10 15h9M10 19h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                  <circle cx="23.5" cy="22.5" r="5.2" fill="var(--surface)" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="m27.3 26.3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M21 22.5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="lab-body">
+                <span class="lab-name">行话对照</span>
+                <span class="lab-desc">口语俗称与规范叫名双向速查</span>
+              </span>
+              <span class="lab-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </span>
+            </button>
+            <!-- 法兰螺栓孔距速查 -->
+            <button type="button" class="lab-card" data-tool="flange" aria-label="打开法兰螺栓孔距速查">
+              <span class="lab-ico" aria-hidden="true">
+                <svg viewBox="0 0 32 32" fill="none">
+                  <circle cx="16" cy="16" r="12.5" fill="currentColor" opacity=".08"/>
+                  <circle cx="16" cy="16" r="12.5" stroke="currentColor" stroke-width="1.8"/>
+                  <circle cx="16" cy="16" r="5.6" stroke="currentColor" stroke-width="1.7"/>
+                  <circle cx="16" cy="16" r="1.5" fill="currentColor" opacity=".35"/>
+                  <g fill="var(--surface)" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="16" cy="6.4" r="1.9"/><circle cx="16" cy="25.6" r="1.9"/>
+                    <circle cx="6.4" cy="16" r="1.9"/><circle cx="25.6" cy="16" r="1.9"/>
+                  </g>
+                </svg>
+              </span>
+              <span class="lab-body">
+                <span class="lab-name">法兰螺栓孔距速查</span>
+                <span class="lab-desc">DN 查外径、孔距、孔数与螺栓规格</span>
+              </span>
+              <span class="lab-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </span>
+            </button>
+            <!-- 术语解释 -->
+            <button type="button" class="lab-card" data-tool="term" aria-label="打开术语解释">
+              <span class="lab-ico" aria-hidden="true">
+                <svg viewBox="0 0 32 32" fill="none">
+                  <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H13a3 3 0 0 1 3 3v20a3 3 0 0 0-3-3H7.5A2.5 2.5 0 0 1 5 20.5z" fill="currentColor" opacity=".1"/>
+                  <path d="M27 5.5A2.5 2.5 0 0 0 24.5 3H19a3 3 0 0 0-3 3v20a3 3 0 0 1 3-3h5.5a2.5 2.5 0 0 0 2.5-2.5z" fill="currentColor" opacity=".1"/>
+                  <path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H13a3 3 0 0 1 3 3v20a3 3 0 0 0-3-3H7.5A2.5 2.5 0 0 1 5 20.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M27 5.5A2.5 2.5 0 0 0 24.5 3H19a3 3 0 0 0-3 3v20a3 3 0 0 1 3-3h5.5a2.5 2.5 0 0 0 2.5-2.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M8.5 9h4M8.5 13h4M19.5 9h4M19.5 13h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="lab-body">
+                <span class="lab-name">术语解释</span>
+                <span class="lab-desc">缩写来源、标准术语与功能白话速查</span>
+              </span>
+              <span class="lab-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </span>
+            </button>
+          </div>
+        </div>
+        <!-- 工具承载层：点击功能卡片后在此内嵌打开 -->
+        <div class="lab-stage" id="labStage" hidden aria-hidden="true">
+          <div class="lab-stage-bar">
+            <button type="button" class="lab-back" id="labBack" aria-label="返回功能实验区">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              <span>功能实验区</span>
+            </button>
+            <span class="lab-stage-title" id="labStageTitle"></span>
+            <button type="button" class="lab-opennew" id="labOpenNew" title="在新窗口打开" aria-label="在新窗口打开">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>
+            </button>
+          </div>
+          <iframe class="lab-frame" id="labFrame" title="功能工具" allowfullscreen></iframe>
+          <div class="lab-fallback" id="labFallback" hidden role="status">
+            <div class="lab-fallback-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>
+            </div>
+            <p>工具加载中，或暂时无法打开</p>
+            <span>请检查网络后重试</span>
+            <button type="button" data-retry>重新加载</button>
+          </div>
+        </div>
+      </section>
+
     </div>
   </main>
 </div>
@@ -437,7 +651,9 @@ if ('serviceWorker' in navigator) {
 <!-- V28_GESTURE_END -->
 
   <script src="static/curriculum.ad941a8930.js"></script>
-  <script src="static/materials.2c1c27dad0.js"></script>
-  <script src="static/app.ff7642c9ea.js"></script>
+  <script src="static/materials.1ff2e1adf0.js"></script>
+  <script src="static/slang-data.js"></script>
+  <script src="static/term-data.js"></script>
+  <script src="static/app.ac63eea982.js"></script>
 </body>
 </html>

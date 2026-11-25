@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0B5CAD">
+<title>口径计算器 · 供水行业专用</title>
+<style>
+/* ================================================================
+   口径计算器 · 视觉系统 v2
+   设计语言：分层悬浮 / 冷静专业 / 8px 节奏 / 线性图标
+   ================================================================ */
+
+/* ---------- 0. 设计令牌 ---------- */
+:root{
+  /* ===== 平台纯蓝主题（Phase 1 令牌） ===== */
+  --brand:#0B5CAD; --brand-deep:#084A8A; --accent:#2E7BD6; --accent-soft:#E7F0FC;
+  --paper:#F1F4F9; --surface:#FFFFFF; --raised:#E6EDF7; --sunken:#EDF3FB;
+  --ink:#1E293B; --ink-2:#475569; --ink-3:#58697D;
+  --line:#E2E8F0; --hair:#EEF2F7;
+  --ok:#15803D; --warn:#B45309; --err:#DC2626;
+  --r-xs:6px; --r-sm:10px; --r-md:14px; --r-lg:20px;
+  /* 三级阴影 + 内凹 + 按压，投影一律冷蓝半透明，禁纯黑 */
+  --sh-1:0 1px 2px rgba(16,32,58,.05),0 2px 6px rgba(16,32,58,.04),inset 0 1px 0 rgba(255,255,255,.7);
+  --sh-2:0 2px 4px rgba(16,32,58,.06),0 8px 18px rgba(16,32,58,.08),inset 0 1px 0 rgba(255,255,255,.75);
+  --sh-3:0 4px 8px rgba(16,32,58,.08),0 16px 36px rgba(16,32,58,.12),inset 0 1px 0 rgba(255,255,255,.8);
+  --sh-inset:inset 0 1px 3px rgba(16,32,58,.07),inset 0 -1px 0 rgba(255,255,255,.7);
+  --sh-press:inset 0 2px 6px rgba(16,32,58,.12),0 1px 0 rgba(255,255,255,.5);
+  /* 字号阶梯：cap12 / body14 / sub16 / title18 / num28 / hero40 */
+  --fs-cap:12px; --fs-body:14px; --fs-sub:16px; --fs-title:18px; --fs-num:28px; --fs-hero:40px;
+  /* 向后兼容别名：旧变量统一指向新令牌，保证既有规则不失效 */
+  --blue-lt:var(--accent); --blue:var(--brand); --blue-dk:var(--brand-deep);
+  --blue-050:var(--sunken); --blue-100:#D9E7F7; --blue-200:#B9D4F0;
+  --blue-deep:var(--brand-deep); --blue-tint:var(--accent-soft);
+  --gold:var(--warn); --gold-lt:#B45309; --gold-bg:#FDF6EC; --gold-line:#F0E0C6;
+  --ok-bg:#EAF6EE; --err-bg:#FDECEC;
+  --white:var(--surface); --line-2:var(--line); --r:var(--r-md);
+  --shadow:var(--sh-2); --shadow-hi:var(--sh-3); --shadow-hero:var(--sh-3); --shadow-inset:var(--sh-inset);
+  --ease:cubic-bezier(.4,0,.2,1);
+  /* 线性图标库（1.5px 描边，stroke=currentColor 由 mask 决定） */
+  --i-search:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10.8' cy='10.8' r='6.8'/%3E%3Cpath d='M20 20l-4.2-4.2'/%3E%3C/svg%3E");
+  --i-drop:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.8s-6.2 6.6-6.2 10.6a6.2 6.2 0 0 0 12.4 0C18.2 9.4 12 2.8 12 2.8z'/%3E%3C/svg%3E");
+  --i-doc:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 2.5h8.5L19 7v14.5H6z'/%3E%3Cpath d='M14.5 2.5V7H19M9 12.5h6M9 16.5h6'/%3E%3C/svg%3E");
+  --i-warn:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.2 21.2 20H2.8z'/%3E%3Cpath d='M12 9.5v4.8M12 17.3h.01'/%3E%3C/svg%3E");
+  --i-tool:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.2 6.2a4 4 0 0 0-5 5L3.4 17a2 2 0 0 0 2.8 2.8l5.8-5.8a4 4 0 0 0 5-5L14 11.8 12.2 10z'/%3E%3C/svg%3E");
+  --i-star:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m12 2.8 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.6l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z'/%3E%3C/svg%3E");
+  --i-info:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v5.5M12 7.6h.01'/%3E%3C/svg%3E");
+  --i-pin:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21s7-6.4 7-11a7 7 0 1 0-14 0c0 4.6 7 11 7 11z'/%3E%3Ccircle cx='12' cy='10' r='2.4'/%3E%3C/svg%3E");
+  --i-gear:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2.5v2.6M12 18.9v2.6M4.3 4.3l1.9 1.9M17.8 17.8l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.3 19.7l1.9-1.9M17.8 6.2l1.9-1.9'/%3E%3C/svg%3E");
+  --i-link:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.5 13.5a4.2 4.2 0 0 0 6 0l2-2a4.2 4.2 0 0 0-6-6l-1 1M13.5 10.5a4.2 4.2 0 0 0-6 0l-2 2a4.2 4.2 0 0 0 6 6l1-1'/%3E%3C/svg%3E");
+  --i-copy:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='12' height='12' rx='2'/%3E%3Cpath d='M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2'/%3E%3C/svg%3E");
+  --i-clock:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 6.5V12l3.6 2.2'/%3E%3C/svg%3E");
+  --i-ruler:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 16.5 16.5 3.5l4 4L7.5 20.5z'/%3E%3Cpath d='m10 10 2 2M13 7l2 2M7 13l2 2'/%3E%3C/svg%3E");
+  --i-ring:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Ccircle cx='12' cy='12' r='4.4'/%3E%3C/svg%3E");
+  --i-hash:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M6 9h12M6 15h12M10.5 3 8.5 21M15.5 3l-2 18'/%3E%3C/svg%3E");
+  --i-chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --i-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h15M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+
+/* 线性图标基类：隐藏原 emoji，用 mask 显示 SVG */
+.ico,.tab-ico,.adv-ico,.d-ico,.ti,.fold-arrow,.adv-arrow{
+  display:inline-block;flex:none;background:currentColor;
+  -webkit-mask-image:var(--ico);mask-image:var(--ico);
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-position:center;mask-position:center;
+  -webkit-mask-size:contain;mask-size:contain;
+  font-size:0!important;line-height:0;color:inherit;
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    radial-gradient(900px 480px at 50% -10%,rgba(46,123,214,.08),transparent 62%),
+    radial-gradient(700px 420px at 92% 4%,rgba(11,92,173,.06),transparent 60%),
+    repeating-linear-gradient(0deg,rgba(11,92,173,.022) 0 1px,transparent 1px 32px),
+    repeating-linear-gradient(90deg,rgba(11,92,173,.022) 0 1px,transparent 1px 32px);
+  background-attachment:fixed;
+  line-height:1.7;font-size:var(--fs-body);
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--blue);text-decoration:none}
+:focus-visible{outline:2px solid var(--blue-lt);outline-offset:2px;border-radius:6px}
+
+/* ---------- 1. 顶部 Header ---------- */
+.app-header{
+  background:linear-gradient(115deg,var(--brand) 0%,var(--brand) 46%,var(--brand-deep) 100%);
+  color:#fff;padding:20px 28px;position:relative;overflow:hidden;
+  box-shadow:var(--sh-3);
+  border-bottom:1px solid rgba(255,255,255,.12)
+}
+.app-header::before{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(127,196,255,.65),transparent)}
+.app-header::after{content:"";position:absolute;inset:0;background:
+  radial-gradient(circle at 86% -42%,rgba(127,196,255,.42),transparent 52%),
+  radial-gradient(circle at 10% 150%,rgba(6,52,112,.55),transparent 56%);pointer-events:none}
+.header-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:14px;position:relative;z-index:1}
+.header-hex{flex:none;width:46px;height:46px;opacity:.96}
+.header-copy h1{font-size:22px;font-weight:700;letter-spacing:.3px;line-height:1.25}
+.header-copy p{font-size:12px;opacity:.72;margin-top:2px;letter-spacing:.2px}
+.header-badge{margin-left:auto;flex:none;font-size:12px;letter-spacing:.3px;padding:5px 12px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(255,255,255,.08);white-space:nowrap}
+
+/* ---------- 2. 布局（8px 节奏 / 400px 分栏） ---------- */
+.app-main{max-width:1280px;margin:24px auto 32px;padding:0 24px}
+.layout{display:grid;grid-template-columns:400px 1fr;gap:24px;align-items:start}
+.panel{
+  background:var(--surface);border-radius:var(--r-md);
+  box-shadow:var(--sh-2);border:1px solid var(--hair);
+  padding:24px;
+}
+.panel-hd{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.panel-hd .hd-icon{width:22px;height:22px;--ico:var(--i-ruler);color:var(--blue);
+  -webkit-mask-image:var(--ico);mask-image:var(--ico);-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;background:var(--blue);flex:none}
+.panel-hd h2{font-size:var(--fs-sub);font-weight:700;letter-spacing:.2px}
+.panel-hd .hd-sub{font-size:12px;color:var(--ink-3);margin-left:auto}
+.lead-line{font-size:12px;color:var(--ink-2);margin-bottom:16px;line-height:1.6}
+
+/* ---------- 3. 输入区 ---------- */
+.mode-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--sunken);border-radius:var(--r-sm);padding:5px;margin-bottom:16px}
+.mode-tab{
+  padding:10px 4px;border-radius:var(--r-xs);font-size:var(--fs-cap);font-weight:600;color:var(--ink-2);
+  text-align:center;transition:all .2s var(--ease);min-height:62px;
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-1);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative
+}
+.mode-tab:hover{background:var(--accent-soft);border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--sh-2)}
+.mode-tab:active{transform:translateY(0);box-shadow:var(--sh-press)}
+.mode-tab.active{background:var(--accent-soft);color:var(--brand);border-color:var(--brand);box-shadow:var(--sh-2);font-weight:700}
+.mode-tab.active::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--brand)}
+.tab-ico{width:20px;height:20px}
+.mode-tab[data-mode="dn"] .tab-ico{--ico:var(--i-ruler)}
+.mode-tab[data-mode="de"] .tab-ico{--ico:var(--i-ring)}
+.mode-tab[data-mode="inch"] .tab-ico{--ico:var(--i-hash)}
+.mode-tab[data-mode="flow"] .tab-ico{--ico:var(--i-drop)}
+.mode-tab.active .tab-ico{color:var(--blue)}
+.tab-num{display:block;font-size:var(--fs-cap);color:var(--ink-3);font-weight:400}
+.mode-tab.active .tab-num{color:var(--blue);opacity:.8}
+.mini-help{margin:-4px 0 16px;font-size:12px;color:var(--ink-3)}
+.mini-help summary{cursor:pointer;list-style:none;display:inline-block;text-decoration:underline dotted;color:var(--ink-3)}
+.mini-help summary::-webkit-details-marker{display:none}
+.mini-help ol{margin:8px 0 0;padding-left:20px;line-height:1.7}
+.mini-help li{margin-bottom:4px}
+
+.field{margin-bottom:16px}
+.field label.lbl{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:8px}
+.field label.lbl .req{color:var(--err);margin-left:2px}
+.ctrl{
+  width:100%;min-height:46px;padding:11px 13px;border:1px solid var(--line);border-radius:var(--r-xs);
+  background:var(--surface);transition:all .2s var(--ease);font-size:var(--fs-body);color:var(--ink);
+  box-shadow:var(--sh-1)
+}
+.ctrl:hover{background-color:var(--raised);border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--sh-2)}
+.ctrl:focus{background-color:var(--surface);border-color:var(--brand);box-shadow:var(--sh-2),0 0 0 3px rgba(46,123,214,.22);outline:none}
+.ctrl:active{box-shadow:var(--sh-press)}
+select.ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23788490' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:40px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:12px;color:var(--ink-3);margin-top:6px;line-height:1.5}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{min-height:42px;padding:9px 16px;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:600;color:var(--ink-2);box-shadow:var(--sh-1);transition:all .2s var(--ease)}
+.seg button:hover{background:var(--accent-soft);border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--sh-2)}
+.seg button:active{transform:translateY(0);box-shadow:var(--sh-press)}
+.seg button.active{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:var(--sh-2)}
+.locked-note{font-size:12px;color:var(--gold);background:var(--gold-bg);border:1px solid var(--gold-line);border-radius:var(--r-xs);padding:10px 12px;margin-top:8px;display:flex;align-items:center;gap:8px;line-height:1.5}
+.locked-note .ico{width:16px;height:16px;--ico:var(--i-link)}
+
+.btn-primary{
+  width:100%;min-height:50px;border-radius:var(--r-xs);font-size:var(--fs-sub);font-weight:700;letter-spacing:.5px;color:#fff;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:linear-gradient(180deg,#2E7BD6 0%,#0B5CAD 100%);
+  box-shadow:var(--sh-2);
+  transition:transform .2s var(--ease),box-shadow .2s var(--ease),filter .2s var(--ease);
+  margin-top:4px
+}
+.btn-primary .ico{width:18px;height:18px;--ico:var(--i-arrow)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:var(--sh-3);filter:brightness(1.06)}
+.btn-primary:active{transform:translateY(0);box-shadow:var(--sh-press);filter:brightness(1)}
+.input-foot{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.btn-ghost{min-height:42px;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--surface);color:var(--brand);font-size:13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:7px;box-shadow:var(--sh-1);transition:all .2s var(--ease)}
+.btn-ghost .ico{width:15px;height:15px;--ico:var(--i-star)}
+.btn-ghost:hover{background:var(--accent-soft);border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--sh-2)}
+.btn-ghost:active{transform:translateY(0);box-shadow:var(--sh-press)}
+
+.storage-section{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+.storage-title{font-size:12px;font-weight:600;color:var(--ink-2);letter-spacing:.2px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.storage-title>span{display:inline-flex;align-items:center;gap:7px}
+.storage-title .ico{width:15px;height:15px;color:var(--blue)}
+.storage-title .ico-star{--ico:var(--i-star)}
+.storage-title .ico-clock{--ico:var(--i-clock);color:var(--ink-3)}
+.storage-title button{font-size:12px;color:var(--ink-3);font-weight:400;transition:color .2s}
+.storage-title button:hover{color:var(--blue)}
+.chip-list{display:flex;flex-wrap:wrap;gap:8px;max-height:96px;overflow-y:auto}
+.chip{font-size:12px;padding:7px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);box-shadow:var(--sh-1);transition:all .2s var(--ease);white-space:nowrap}
+.chip:hover{border-color:var(--accent);color:var(--brand);background:var(--accent-soft);transform:translateY(-2px);box-shadow:var(--sh-2)}
+.chip.fav{background:var(--gold-bg);border-color:var(--gold-line);color:var(--gold)}
+.empty-mini{font-size:12px;color:var(--ink-3)}
+
+/* ---------- 4. 结果区 ---------- */
+.result-stack{display:flex;flex-direction:column;gap:24px;min-width:0}
+.result-card{background:var(--surface);border-radius:var(--r-md);box-shadow:var(--sh-2);border:1px solid var(--hair);overflow:hidden;animation:fadeUp .35s var(--ease) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.rc-hd{display:flex;align-items:center;gap:10px;padding:20px 24px 0}
+.rc-hd .dot{width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,var(--blue-lt),var(--blue));flex:none;box-shadow:0 0 0 4px var(--blue-050)}
+.rc-hd h3{font-size:15px;font-weight:700;color:var(--ink)}
+.rc-hd .rc-tag{margin-left:auto;font-size:12px;color:var(--ink-3);background:var(--blue-050);padding:4px 11px;border-radius:999px}
+.rc-bd{padding:20px 24px 24px}
+
+/* 核心结果卡：深蓝仪表盘头部，作为整页视觉锚点 */
+.result-card.primary{border:none;box-shadow:var(--sh-3)}
+.result-card.primary .rc-hd{
+  background:linear-gradient(115deg,var(--brand) 0%,var(--brand) 46%,var(--brand-deep) 100%);
+  padding:20px 24px;color:#fff;position:relative;overflow:hidden
+}
+.result-card.primary .rc-hd::after{content:"";position:absolute;inset:0;background:
+  radial-gradient(circle at 82% -60%,rgba(127,196,255,.45),transparent 55%),
+  radial-gradient(circle at 8% 165%,rgba(6,52,112,.6),transparent 60%);pointer-events:none}
+.result-card.primary .rc-hd .dot{background:#7FC4FF;box-shadow:0 0 0 5px rgba(255,255,255,.15)}
+.result-card.primary .rc-hd h3{color:#fff;font-size:16px;position:relative;z-index:1;letter-spacing:.4px}
+.result-card.primary .rc-hd .rc-tag{position:relative;z-index:1;background:rgba(255,255,255,.14);color:#EAF4FF;border:1px solid rgba(255,255,255,.22);font-weight:600}
+.result-card.primary .rc-bd{padding-top:22px;display:flex;flex-direction:column;gap:16px}
+
+/* 结论段：标签 + 主句 + 补充（grid 结构，不再报数字） */
+.plain-summary{display:grid;grid-template-columns:auto 1fr;column-gap:8px;row-gap:4px;
+  padding:10px 12px;background:var(--paper);border:1px solid var(--line);border-radius:10px}
+.sum-tag{grid-row:1/span 2;align-self:start;margin-top:1px;padding:1px 6px;border-radius:5px;
+  background:var(--accent-soft);color:var(--brand);font-size:12px;font-weight:600;line-height:18px}
+.sum-main,.sum-sub{grid-column:2}
+.sum-main{font-size:14px;line-height:20px;color:var(--ink)}
+.sum-main b{font-weight:600;color:var(--brand-deep)}
+.sum-sub{font-size:12px;line-height:16px;color:var(--ink-3)}
+
+/* DN 答案条：浅底横向条（替代旧圆形仪表盘） */
+.dn-hero{
+  display:flex;align-items:center;gap:12px;
+  min-height:88px;padding:14px 16px;
+  background:var(--sunken);
+  border:1px solid var(--line);border-left:4px solid var(--accent);
+  border-radius:12px;box-shadow:var(--sh-1)
+}
+.dn-hero .big{flex:0 0 auto;display:flex;align-items:baseline;gap:2px;
+  width:auto;height:auto;background:transparent;border-radius:0;box-shadow:none;line-height:1}
+.dn-pref{font-size:var(--fs-title);font-weight:600;color:var(--brand)}
+.dn-num{font-size:var(--fs-hero);font-weight:700;color:var(--brand-deep);
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.dn-hero .cap{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dn-lead{font-size:var(--fs-cap);color:var(--ink-3);letter-spacing:.04em}
+.dn-hero .cap b{font-size:var(--fs-sub);font-weight:600;color:var(--ink);white-space:nowrap}
+.cap-sub{font-size:var(--fs-cap);color:var(--ink-2)}
+
+/* 6 项浅底卡片网格（无分隔线） */
+.result-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sev{background:var(--raised);border:1px solid var(--hair);border-radius:var(--r-sm);padding:14px 10px;text-align:center;min-width:0;transition:all .2s var(--ease);box-shadow:var(--sh-1)}
+.sev:hover{background:var(--accent-soft);border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--sh-2)}
+.sev .k{font-size:12px;color:var(--ink-3);font-weight:400;margin-bottom:6px;white-space:nowrap}
+.sev .v{font-size:21px;font-weight:700;color:var(--brand-deep);line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.sev .sub{font-size:12px;color:var(--ink-3);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sev.hl{background:var(--gold-bg);border-color:var(--gold-line)}
+.sev.hl .v{color:var(--gold-lt)}
+
+/* 详情章节：分组 + 左竖线点缀 */
+.detail-group{margin-top:26px}
+.detail-title{font-size:12px;font-weight:700;color:var(--ink-2);letter-spacing:1.5px;padding:0 0 10px 13px;margin-bottom:12px;position:relative;display:flex;align-items:center;gap:12px}
+.detail-title::before{content:"";position:absolute;left:0;top:1px;bottom:9px;width:3px;border-radius:3px;background:linear-gradient(180deg,var(--blue-lt),var(--blue-dk))}
+.detail-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line-2),transparent)}
+.detail-row{border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--sunken);box-shadow:var(--sh-inset);overflow:hidden}
+.detail-row+.detail-row{margin-top:12px}
+.detail-row>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:15px 16px;font-size:13px;font-weight:600;color:var(--ink-2);border-left:3px solid var(--line);transition:all .2s var(--ease)}
+.detail-row>summary::-webkit-details-marker{display:none}
+.detail-row>summary:hover{background:var(--surface);border-left-color:var(--accent)}
+.detail-row[open]>summary{border-left-color:var(--blue)}
+.d-ico{width:18px;height:18px;color:var(--blue)}
+.d-ico.ico-search{--ico:var(--i-search)}
+.d-ico.ico-drop{--ico:var(--i-drop)}
+.d-ico.ico-doc{--ico:var(--i-doc)}
+.d-ico.ico-warn{--ico:var(--i-warn);color:var(--gold)}
+.d-ico.ico-tool{--ico:var(--i-tool)}
+.d-ico.ico-star{--ico:var(--i-star)}
+.d-meta{margin-left:auto;font-size:12px;color:var(--ink-3);font-weight:400}
+.fold-arrow{width:16px;height:16px;color:var(--ink-3);--ico:var(--i-chev);background:var(--ink-3);flex:none;margin-left:6px;transition:transform .25s var(--ease)}
+.detail-row[open] .fold-arrow{transform:rotate(180deg)}
+.detail-row>.rc-bd{padding:18px 16px;border-top:1px solid var(--line)}
+
+/* 表格 */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
+table.tbl th,table.tbl td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tbl th{font-size:12px;color:var(--ink-3);font-weight:700;background:#F7FAFE}
+table.tbl tr:last-child td{border-bottom:none}
+table.tbl tbody tr:hover{background:#FAFCFF}
+table.tbl td.diff{color:var(--gold-lt);font-weight:700}
+table.tbl td.cur{background:var(--blue-050);font-weight:700;color:var(--blue)}
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--blue-050);color:var(--blue)}
+.badge.gold{background:var(--gold-bg);color:var(--gold)}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.warn{background:var(--gold-bg);color:var(--gold)}
+
+/* 水力参考 */
+.hydro{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.hydro:last-child{margin-bottom:0}
+.hbox{border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 16px;background:var(--surface);box-shadow:var(--sh-1);transition:all .2s var(--ease)}
+.hbox .hb-k{font-size:12px;color:var(--ink-3);font-weight:600;margin-bottom:6px}
+.hbox .hb-v{font-size:22px;font-weight:700;color:var(--brand-deep);font-variant-numeric:tabular-nums}
+.hbox .hb-v .u{font-size:12px;color:var(--ink-3);font-weight:400}
+.hbox .hb-s{font-size:12px;color:var(--ink-3);margin-top:5px;line-height:1.5}
+.hbox.warnbox{border-color:var(--gold-line);background:var(--gold-bg)}
+.hbox.warnbox .hb-v,.hbox.warnbox .hb-s{color:var(--gold)}
+
+/* 标准号 */
+.std-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);box-shadow:var(--sh-1)}
+.std-row .stxt{flex:1;min-width:0}
+.std-row .stxt b{display:block;font-size:14px;color:var(--blue);font-weight:700}
+.std-row .stxt span{font-size:12px;color:var(--ink-2)}
+.btn-copy{flex:none;min-height:38px;padding:8px 14px;border-radius:var(--r-xs);background:#fff;border:1.5px solid var(--blue);color:var(--blue);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:all .2s var(--ease)}
+.btn-copy .ico{width:15px;height:15px;--ico:var(--i-copy)}
+.btn-copy:hover{background:var(--brand);color:#fff;box-shadow:var(--sh-2);transform:translateY(-1px)}
+
+/* 提示 */
+.tip{display:flex;gap:10px;padding:11px 13px;border-radius:var(--r-xs);margin-bottom:8px;font-size:12px;line-height:1.6;background:var(--gold-bg);border:1px solid var(--gold-line);color:#6E5318}
+.tip:last-child{margin-bottom:0}
+.tip .ti{width:17px;height:17px;margin-top:2px;--ico:var(--i-warn);color:var(--gold)}
+.tip .ti-pin{--ico:var(--i-pin)}
+.tip.neutral{background:var(--blue-050);border-color:var(--blue-100);color:var(--ink-2)}
+.tip.neutral .ti{--ico:var(--i-info);color:var(--blue)}
+.tip b{color:var(--gold)}
+.tip.neutral b{color:var(--blue)}
+
+/* 材料卡 */
+.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.mat-card{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:#fff;transition:all .2s var(--ease);cursor:pointer}
+.mat-card:hover{border-color:var(--blue-lt);box-shadow:var(--shadow);transform:translateY(-2px)}
+.mat-thumb{height:64px;display:grid;place-items:center;background:linear-gradient(160deg,#F5F9FE,#EAF1FA);border-bottom:1px solid var(--line)}
+.mat-thumb svg{width:34px;height:34px}
+.mat-info{padding:11px 13px}
+.mat-info .mn{font-size:13px;font-weight:700;color:var(--ink);line-height:1.4;margin-bottom:5px}
+.mat-info .ms{font-size:12px;color:var(--ink-3);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.mat-info .mc{font-size:12px;color:var(--blue);font-weight:600;margin-top:6px;display:flex;gap:6px}
+.mat-detail{display:none;padding:11px 13px;border-top:1px dashed var(--line-2);background:#FBFDFF;font-size:12px;color:var(--ink-2)}
+.mat-detail.open{display:block}
+.mat-detail .dl{display:flex;justify-content:space-between;gap:8px;padding:3px 0}
+.mat-detail .dl b{color:var(--ink);font-weight:600;text-align:right;word-break:break-all}
+.no-mat{font-size:13px;color:var(--ink-3);text-align:center;padding:24px}
+
+/* 页脚 / Toast / 空态 */
+.disclaimer{max-width:1280px;margin:0 auto 28px;padding:16px 24px;border-top:1px solid var(--line-2);font-size:12px;color:var(--ink-3);text-align:center;line-height:1.6}
+.disclaimer b{color:var(--gold);font-weight:700}
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);z-index:99;background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:var(--shadow-hi);opacity:0;pointer-events:none;transition:all .28s var(--ease);white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.empty-state{padding:48px 20px;text-align:center;color:var(--ink-3);font-size:14px;line-height:1.8}
+
+/* ---------- 5. 细节 & 交互 ---------- */
+.focus-flash{animation:focusPulse 1.4s var(--ease) 2;border-color:var(--blue-lt)!important}
+@keyframes focusPulse{0%,100%{box-shadow:0 0 0 0 rgba(46,123,214,0)}50%{box-shadow:0 0 0 4px rgba(46,123,214,.16)}}
+
+.term-help{display:inline-block;position:relative;margin-left:4px;vertical-align:middle}
+.term-help summary{list-style:none;cursor:pointer;position:relative;width:16px;height:16px;line-height:14px;text-align:center;border:1px solid var(--line-2);border-radius:50%;font-size:12px;font-weight:700;color:var(--ink-3);background:#fff;transition:all .2s var(--ease)}
+/* 触摸热区扩展至 28px（WCAG 2.2 AA 24px 底线），视觉尺寸不变 */
+.term-help summary::after{content:"";position:absolute;inset:-6px;border-radius:50%}
+.term-help summary::-webkit-details-marker{display:none}
+.term-help[open] summary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.term-body{position:absolute;left:0;top:calc(100% + 8px);z-index:40;width:min(260px,78vw);background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow-hi);padding:12px 14px;font-size:12px;line-height:1.6;font-weight:400;color:var(--ink-2)}
+.term-body b{color:var(--blue)}
+
+.advanced{border:1px solid var(--line);border-radius:var(--r-sm);margin-bottom:20px;background:var(--surface);box-shadow:var(--sh-1);overflow:hidden}
+.advanced[hidden]{display:none}
+.advanced>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:13px 14px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.advanced>summary::-webkit-details-marker{display:none}
+.adv-ico{width:17px;height:17px;--ico:var(--i-gear);color:var(--blue)}
+.adv-note{margin-left:auto;font-size:12px;font-weight:400;color:var(--ink-3)}
+.adv-arrow{width:16px;height:16px;--ico:var(--i-chev);background:var(--ink-3);transition:transform .25s var(--ease)}
+.advanced[open] .adv-arrow{transform:rotate(180deg)}
+.adv-body{padding:2px 14px 16px}
+
+/* ---------- 6. 响应式（桌面 / 移动差异化） ---------- */
+@media(max-width:1000px){
+  .layout{grid-template-columns:1fr;gap:24px}
+  .app-main{margin-top:20px;padding:0 18px}
+}
+@media(max-width:600px){
+  .app-header{padding:14px 16px}
+  .header-hex{width:38px;height:38px}
+  .header-copy h1{font-size:18px}
+  .header-copy p{font-size:12px}
+  .header-badge{display:none}
+  .app-main{margin-top:16px;padding:0 12px}
+  .panel{padding:18px;border-radius:14px}
+  .panel-hd{margin-bottom:16px}
+  .rc-bd{padding:16px 14px 18px}
+  .rc-hd{padding:16px 14px 0}
+  .mode-tab{min-height:58px;padding:8px 2px}
+  .grid-2{gap:10px}
+  .result-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .sev{padding:12px 8px}
+  .sev .v{font-size:19px}
+  .result-card.primary .rc-hd{padding:17px 16px}
+  .result-card.primary .rc-hd h3{font-size:15px}
+  .result-card.primary .rc-bd{padding:18px 14px 20px}
+  .hydro{grid-template-columns:1fr}
+  .mat-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .term-body{left:auto;right:0;width:min(260px,88vw)}
+  .adv-note{display:none}
+  .detail-row>summary{padding:13px 12px;gap:10px}
+  table.tbl{min-width:440px}
+  .toast{bottom:18px;max-width:90vw;white-space:normal;text-align:center}
+}
+@media(max-width:380px){
+  .result-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sev .v{font-size:17px}
+  .mode-tab{font-size:12px}
+  .tab-num{font-size:12px}
+}
+@media(max-width:360px){
+  .dn-hero{padding:12px;gap:8px}
+  .dn-num{font-size:32px}
+}
+@media print{
+  .btn-primary,.btn-copy,.toast,.mini-help{display:none}
+  .layout{grid-template-columns:1fr}
+  body{background:#fff}
+  .panel,.result-card,.detail-row{box-shadow:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 顶部 ============ -->
+<header class="app-header">
+  <div class="header-inner">
+    <svg class="header-hex" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-label="管道六边形图标">
+      <polygon points="60,6 106,33 106,87 60,114 14,87 14,33" fill="rgba(255,255,255,.10)" stroke="rgba(255,255,255,.45)" stroke-width="2"/>
+      <polygon points="60,18 95,39 95,81 60,102 25,81 25,39" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.2"/>
+      <path d="M34 62 Q48 44 60 62 T86 62" fill="none" stroke="#BFE0FF" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="34" cy="62" r="5.5" fill="#fff"/>
+      <circle cx="60" cy="62" r="5.5" fill="#fff"/>
+      <circle cx="86" cy="62" r="5.5" fill="#fff"/>
+      <text x="60" y="93" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="11" font-family="sans-serif" font-weight="700">DN</text>
+    </svg>
+    <div class="header-copy">
+      <h1>口径计算器</h1>
+      <p>九维换算 · 防错对照</p>
+    </div>
+    <div class="header-badge">离线可用</div>
+  </div>
+</header>
+
+<!-- ============ 主体 ============ -->
+<main class="app-main">
+  <div class="layout">
+
+    <!-- ===== 输入面板 ===== -->
+    <section class="panel" id="inputPanel">
+      <div class="panel-hd">
+        <h2>选择输入</h2>
+        <span class="hd-sub">1 分钟完成</span>
+      </div>
+      <div class="panel-bd">
+        <p class="lead-line">选已知项，即刻换算。</p>
+
+        <!-- 唯一一组场景化入口 -->
+        <div class="mode-tabs" id="modeTabs">
+          <button class="mode-tab active" data-mode="dn" title="适合：知道 DN 或几寸管"><span class="tab-ico"></span>按 DN 查<span class="tab-num">如 DN100</span></button>
+          <button class="mode-tab" data-mode="de" title="适合：量到了管子外径"><span class="tab-ico"></span>按外径查<span class="tab-num">de110 / OD</span></button>
+          <button class="mode-tab" data-mode="inch" title="适合：听到 4分、4寸 这类叫法"><span class="tab-ico"></span>按英寸查<span class="tab-num">4寸 / 6分</span></button>
+          <button class="mode-tab" data-mode="flow" title="适合：只知道每小时多少水"><span class="tab-ico"></span>按流量查<span class="tab-num">算管径</span></button>
+        </div>
+        <details class="mini-help">
+          <summary>不知道选哪个？看 3 步说明</summary>
+          <ol>
+            <li>图纸写 DN100、de110、Φ108 或说「4寸」，选对应入口。</li>
+            <li>材质不确定就保持默认 PE100，结果会给其他材质对照。</li>
+            <li>只知道水量：填每小时多少吨，流速用默认 1.2。</li>
+          </ol>
+        </details>
+
+        <!-- 动态输入区（由 JS 渲染，含场景说明与人话解释） -->
+        <div id="modeFields"></div>
+
+        <!-- 公共：材质 -->
+        <div class="field">
+          <label class="lbl" for="materialSel">管材材质 <span class="req">*</span>
+            <details class="term-help"><summary>?</summary><div class="term-body">就是管子用什么做的。<b>常见给水管用 PE（塑料）或球墨铸铁</b>；不确定就选默认的 PE100，结果里会同时给出其他材质的对照。</div></details>
+          </label>
+          <select class="ctrl" id="materialSel">
+            <option value="PE100">PE100（常用给水管，推荐新手选）</option>
+            <option value="PE80">PE80（聚乙烯管）</option>
+            <option value="PPR">PPR（家用冷热水管）</option>
+            <option value="STEEL">钢管（焊接/流体管）</option>
+            <option value="DI">球墨铸铁管（市政主管常用）</option>
+            <option value="LINED">衬塑钢管（钢塑复合）</option>
+          </select>
+</div>
+
+        <!-- C. 高级设置：默认收起 -->
+        <details class="advanced" id="peFields">
+          <summary><span class="adv-ico"></span>高级设置（可选）<span class="adv-note">不懂可跳过，用默认值即可</span><span class="adv-arrow"></span></summary>
+          <div class="adv-body">
+            <div class="grid-2" id="peGrid">
+              <div class="field">
+                <label class="lbl" for="sdrSel">SDR 系列
+                  <details class="term-help"><summary>?</summary><div class="term-body">管壁厚度和外径的比例。<b>数字越小，管壁越厚、越耐压</b>：SDR11 最厚（PN16），SDR17 常用（PN10），SDR26 最薄（PN6）。</div></details>
+                </label>
+                <select class="ctrl" id="sdrSel">
+                  <option value="11">SDR11 · 较厚耐压</option>
+                  <option value="17" selected>SDR17 · 常用</option>
+                  <option value="26">SDR26 · 较薄</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="lbl" for="pnSel">压力等级 PN
+                  <details class="term-help"><summary>?</summary><div class="term-body">管子能承受多大压力。<b>PN10 大约相当于 10 公斤压力</b>，市政给水常用；PN16 更耐压但壁更厚、更贵。</div></details>
+                </label>
+                <select class="ctrl" id="pnSel">
+                  <option value="0.6">PN6 · 0.6MPa（低压）</option>
+                  <option value="1.0" selected>PN10 · 1.0MPa（常用）</option>
+                  <option value="1.6">PN16 · 1.6MPa（高压）</option>
+                </select>
+              </div>
+            </div>
+            <div class="locked-note" id="peNote"><span class="ico"></span>SDR 与压力等级互相对应：改一个，另一个自动跟着变（PE100 基准）</div>
+
+            <div class="field" id="steelSeriesField" hidden>
+              <label class="lbl" for="steelSeriesSel">钢管壁厚系列（GB/T 3091）
+                <details class="term-help"><summary>?</summary><div class="term-body">同一 DN 有普通管与加厚管两种壁厚。<b>普通管≈≤1.6MPa，加厚管≈≤2.5MPa</b>，压力越高选加厚，勿混用。</div></details>
+              </label>
+              <select class="ctrl" id="steelSeriesSel">
+                <option value="normal">普通管 · ≤1.6MPa</option>
+                <option value="heavy">加厚管 · ≤2.5MPa</option>
+              </select>
+            </div>
+
+            <div class="field" id="diKField" hidden>
+              <label class="lbl" for="diKSel">球铁壁厚等级（GB/T 13295）
+                <details class="term-help"><summary>?</summary><div class="term-body">K 级决定球铁管壁厚，<b>K9 是国标主流（≈1.6MPa）</b>；K10/K12 用于高压重载。按近似公式/查表取值，采购核对厂家公差表。</div></details>
+              </label>
+              <select class="ctrl" id="diKSel">
+                <option value="8">K8 · 低压</option>
+                <option value="9" selected>K9 · 国标常用</option>
+                <option value="10">K10 · 高压重载</option>
+                <option value="12">K12 · 特殊高压</option>
+              </select>
+            </div>
+
+            <div class="field" style="margin-top:14px">
+              <label class="lbl" for="wallInput">管壁厚度 t（mm，可手改）
+                <details class="term-help"><summary>?</summary><div class="term-body">管壁有多厚。<b>越厚越耐压，内径变小、流量变小</b>。留空即按所选系列自动取值，手改以设计文件标注为准。</div></details>
+              </label>
+              <input class="ctrl" type="number" id="wallInput" min="0.5" max="100" step="0.01" placeholder="留空＝按系列自动取值">
+              <div class="hint" id="wallHint">留空按所选系列自动取值；手改以实际标注为准</div>
+            </div>
+          </div>
+        </details>
+
+        <button class="btn-primary" id="calcBtn"><span class="ico"></span>开始换算</button>
+
+        <!-- 本地存储区 -->
+        <div class="storage-section">
+          <div class="storage-title"><span><span class="ico ico-star"></span>收藏的规格</span><button id="clearFavBtn">清空</button></div>
+          <div class="chip-list" id="favList"><span class="empty-mini">暂无收藏</span></div>
+        </div>
+        <div class="storage-section">
+          <div class="storage-title"><span><span class="ico ico-clock"></span>最近算过</span><button id="clearHistoryBtn">清空</button></div>
+          <div class="chip-list" id="historyList"><span class="empty-mini">暂无记录</span></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== 结果面板 ===== -->
+    <section class="result-stack" id="resultPanel">
+      <div class="panel"><div class="empty-state">填写左侧参数后点击「开始换算」，结果将在此呈现<br><small>（页面已默认展示 DN100 + PE100 + SDR17 示例）</small></div></div>
+    </section>
+
+  </div>
+</main>
+
+<div class="disclaimer" id="disclaimer">
+  本工具结果为行业通用对照与理论估算，采购/施工<b>以设计文件的公制 DN 或 De 标注为准</b>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   口径计算器 · 预览版（单文件 / 零外部依赖）
+   代码分区：1 数据表 → 2 工具 → 3 换算内核(CALC) → 4 渲染 → 5 事件 → 6 初始化
+   ================================================================ */
+
+/* === CALC_CORE_START === （纯函数区，便于 Node 定向自测） */
+
+/* ========== 1. 内置数据表 ========== */
+
+/** DN 基准表。wallSteel=GB/T 3091 普通管壁厚（≈≤1.6MPa），wallSteelHeavy=加厚管壁厚（≈≤2.5MPa）；外径字段保持原值不变。 */
+const DN_TABLE = {
+  15:   {inch:'1/2',   inchCn:'4分',  dePlastic:20,   odSteel:21.3,  odDI:22,    wallSteel:2.8, wallSteelHeavy:3.5},
+  20:   {inch:'3/4',   inchCn:'6分',  dePlastic:25,   odSteel:26.8,  odDI:26,    wallSteel:2.8, wallSteelHeavy:3.5},
+  25:   {inch:'1',     inchCn:'1寸',  dePlastic:32,   odSteel:33.5,  odDI:34,    wallSteel:3.2, wallSteelHeavy:4.0},
+  32:   {inch:'1-1/4', inchCn:'1寸2', dePlastic:40,   odSteel:42.3,  odDI:42,    wallSteel:3.5, wallSteelHeavy:4.5},
+  40:   {inch:'1-1/2', inchCn:'1寸5', dePlastic:50,   odSteel:48,    odDI:50,    wallSteel:3.5, wallSteelHeavy:4.5},
+  50:   {inch:'2',     inchCn:'2寸',  dePlastic:63,   odSteel:60,    odDI:60,    wallSteel:3.8, wallSteelHeavy:4.5},
+  65:   {inch:'2-1/2', inchCn:'2寸5', dePlastic:75,   odSteel:75.5,  odDI:75,    wallSteel:4.0, wallSteelHeavy:4.5},
+  80:   {inch:'3',     inchCn:'3寸',  dePlastic:90,   odSteel:88.5,  odDI:89,    wallSteel:4.0, wallSteelHeavy:5.0},
+  100:  {inch:'4',     inchCn:'4寸',  dePlastic:110,  odSteel:108,   odSteelAlt:114, odDI:118, wallSteel:4.0, wallSteelHeavy:5.0},
+  125:  {inch:'5',     inchCn:'5寸',  dePlastic:140,  odSteel:133,   odDI:143,   wallSteel:4.0, wallSteelHeavy:5.5},
+  150:  {inch:'6',     inchCn:'6寸',  dePlastic:160,  odSteel:159,   odDI:170,   wallSteel:4.5, wallSteelHeavy:6.0},
+  200:  {inch:'8',     inchCn:'8寸',  dePlastic:200,  dePlasticAlt:225, odSteel:219, odDI:222, wallSteel:6.0, wallSteelHeavy:7.0},
+  250:  {inch:'10',    inchCn:'10寸', dePlastic:250,  odSteel:273,   odDI:274,   wallSteel:6.5, wallSteelHeavy:8.0},
+  300:  {inch:'12',    inchCn:'12寸', dePlastic:315,  odSteel:325,   odDI:326,   wallSteel:7.5, wallSteelHeavy:9.0},
+  350:  {inch:'14',    inchCn:'14寸', dePlastic:355,  odSteel:377,   odDI:378,   wallSteel:8.0, wallSteelHeavy:10.0},
+  400:  {inch:'16',    inchCn:'16寸', dePlastic:400,  odSteel:426,   odDI:429,   wallSteel:9.0, wallSteelHeavy:11.0},
+  500:  {inch:'20',    inchCn:'20寸', dePlastic:500,  odSteel:530,   odDI:532,   wallSteel:10.0, wallSteelHeavy:12.0},
+  600:  {inch:'24',    inchCn:'24寸', dePlastic:630,  odSteel:630,   odDI:635,   wallSteel:11.0, wallSteelHeavy:13.0},
+  800:  {inch:'32',    inchCn:'32寸', dePlastic:800,  odSteel:820,   odDI:842,   wallSteel:12.0, wallSteelHeavy:14.0},
+  1000: {inch:'40',    inchCn:'40寸', dePlastic:1000, odSteel:1020,  odDI:1048,  wallSteel:14.0, wallSteelHeavy:16.0}
+};
+
+/** 球墨铸铁管 GB/T 13295 壁厚查表值（优先查表，K9 为国标主流/默认）。单位 mm。 */
+const DI_K_TABLE = {
+  100: {7:6.0,  8:6.0,  9:6.0,  10:6.6,  12:8.0},
+  200: {7:6.0,  8:6.3,  9:7.2,  10:8.0,  12:9.6},
+  300: {7:6.6,  8:7.2,  9:8.1,  10:9.0,  12:10.8},
+  500: {7:8.0,  8:8.8,  9:9.9,  10:11.0, 12:13.2},
+  800: {7:10.5, 8:11.7, 9:13.2, 10:14.6, 12:17.5},
+  1000:{7:12.0, 8:13.5, 9:15.0, 10:16.7, 12:20.0}
+};
+
+/** K 级说明与对应压力等级（K9≈1.6MPa，市政给水主流） */
+const DI_K_LEVELS = {
+  7: {k:7, label:'K7', pn:0.6, note:'低压非标，慎用'},
+  8: {k:8, label:'K8', pn:1.0, note:'低压场合'},
+  9: {k:9, label:'K9', pn:1.6, note:'国标主流 ≈1.6MPa'},
+  10:{k:10,label:'K10',pn:2.0, note:'高压重载'},
+  12:{k:12,label:'K12',pn:2.5, note:'高压重载（特殊）'}
+};
+
+/** 材质 → 壁厚体系：塑料 SDR/PN、钢及衬塑 普通/加厚、球铁 K 级 */
+const WALL_SYSTEM = {
+  PE100:'sdrpn', PE80:'sdrpn', PPR:'sdrpn',
+  STEEL:'steelSeries', LINED:'steelSeries', DI:'kLevel'
+};
+
+/** SDR ↔ PN 对照（PE100 基准，t = de/SDR）。本工具统一按公式计算，选购请核对产品标注的 SDR 系列。 */
+const SDR_PN_MAP = {
+  11: {sdr:11, pn:1.6, pnLabel:'PN16', wallAtDe110:10.0, note:'高压给水，壁厚最大'},
+  17: {sdr:17, pn:1.0, pnLabel:'PN10', wallAtDe110:110/17, note:'市政给水最常用'},
+  26: {sdr:26, pn:0.6, pnLabel:'PN6',  wallAtDe110:110/26, note:'低压/重力流'}
+};
+
+/** 材质执行标准 */
+const STD_MAP = {
+  PE100:{no:'GB/T 13663.2', name:'给水用聚乙烯（PE）管道系统 第2部分：管材'},
+  PE80: {no:'GB/T 13663.2', name:'给水用聚乙烯（PE）管道系统 第2部分：管材'},
+  PPR:  {no:'GB/T 18742.2', name:'冷热水用聚丙烯管道系统 第2部分：管材'},
+  STEEL:{no:'GB/T 3091',    name:'低压流体输送用焊接钢管'},
+  DI:   {no:'GB/T 13295',   name:'水及燃气用球墨铸铁管、管件和附件'},
+  LINED:{no:'GB/T 28897',   name:'流体输送用钢塑复合管及管件'}
+};
+
+/** 经济流速区间（按 DN 区间）。DN100 提供小区/干管双场景，超区间由 UI 标黄。 */
+const VELOCITY_RANGE = [
+  {maxDn:25,       min:0.6, max:1.2, scenario:'室内小支管（≤DN25）'},
+  {maxDn:80,       min:1.0, max:1.5, scenario:'小区支管（DN50–80）'},
+  {maxDn:100,      min:0.5, max:0.9, scenario:'小区给水（DN100）', alt:{min:1.2,max:1.8,scenario:'干管（DN100）'}},
+  {maxDn:200,      min:0.9, max:1.2, scenario:'输配干管（DN150–200）'},
+  {maxDn:300,      min:1.2, max:1.6, scenario:'主干管（DN250–300）', alt:{min:0.9,max:1.2,scenario:'西南实测（DN300–500）'}},
+  {maxDn:500,      min:1.0, max:1.5, scenario:'输配干管（DN350–500）'},
+  {maxDn:Infinity, min:1.2, max:1.6, scenario:'大口径干管（>DN500）'}
+];
+
+/** 行业易错提示库（PRD 3.5 全部 7 条）。when(ctx) 决定是否触发。 */
+const TIP_RULES = [
+  {id:'inch-plastic', tone:'gold', when:c=>c.mode==='inch' && c.isPlastic,
+   text:'英寸是名义叫法，1寸≈DN25，但 PE 管实际外径多为 32/33.7mm；<b>禁止用 25.4 直接乘</b>算 DN。'},
+  {id:'de110-od108', tone:'gold', when:c=>c.dn===100 && c.isPlastic,
+   text:'<b>De110（塑料）≠ OD108（钢管）</b>，差 2mm 法兰装不上；金属与塑料连接必须用钢塑转换接头。'},
+  {id:'dn-nominal', tone:'gold', when:c=>c.mode==='dn',
+   text:'DN 是公称直径（外径与内径平均值取整），<b>不代表实测毫米数</b>；阀门/法兰按 DN 匹配，塑料管按 de+壁厚标注。'},
+  {id:'sdr-series', tone:'gold', when:c=>c.isPE && c.sdr!=null,
+   text:'同一 DN（以 de110 为例，t=de/SDR）：SDR11(t≈10mm)→PN16、SDR17(t≈6.5mm)→PN10、SDR26(t≈4.2mm)→PN6；高温/腐蚀介质需折减。选购时请核对产品标注的 SDR 系列。'},
+  {id:'pn-compare', tone:'gold', when:c=>c.isPE && (c.pn===1.6 || c.pn===1.0),
+   text:'以 DN50（de63）为例，按 t=de/SDR：SDR11/PN16 壁厚约 5.73mm、SDR17/PN10 约 3.71mm，<b>同 DN 不同压力等级壁厚差可达 50%</b>，选购时请核对产品标注的压力等级，勿混用。'},
+  {id:'cts-ips', tone:'neutral', when:c=>c.mode==='inch',
+   text:'注意区分 CTS（铜/PEX，同标称外径更小）与 IPS/NPS（钢/PVC，更大）；买错系列是最常见采购错误。'},
+  {id:'metal-wall-series', tone:'gold', when:c=>c.material==='STEEL'||c.material==='LINED',
+   text:'同一 DN 钢管有普通管/加厚管两种壁厚（如 DN100：4.0 / 5.0mm），压力越高应选加厚管，<b>勿混用</b>；本工具按 GB/T 3091 系列取值，采购以设计文件标注为准。'},
+  {id:'di-k-level', tone:'gold', when:c=>c.material==='DI',
+   text:'球铁管壁厚按 K 级计算（K8/K9/K10/K12），<b>K9 是国标主流</b>（≈1.6MPa）。本工具按 GB/T 13295 近似公式/查表取壁厚，采购请核对厂家公差表。'},
+  {id:'disclaimer', tone:'neutral', when:c=>true,
+   text:'本工具结果为行业通用对照与理论估算，采购/施工<b>以设计文件的公制 DN 或 De 标注为准</b>。'}
+];
+
+/** 示例材料卡（模拟平台 DATA 结构：cat/lv2/name/model/spec/std/img），覆盖 DN50/100/150/200，含范围写法。 */
+const MATERIAL_SAMPLES = [
+  {id:'M001',cat:'管材',lv2:'PE给水管',name:'PE100 给水管',model:'SDR17 PN10',spec:'de110×6.6 DN100',std:'GB/T 13663.2',img:'🟦',dn:100},
+  {id:'M002',cat:'管材',lv2:'焊接钢管',name:'镀锌焊接钢管',model:'Q235B',spec:'DN100 OD108×4.0',std:'GB/T 3091',img:'⬛',dn:100},
+  {id:'M003',cat:'管件',lv2:'弯头',name:'90° PE 弯头',model:'热熔承插',spec:'de110 DN100',std:'GB/T 13663.3',img:'🔧',dn:100},
+  {id:'M004',cat:'管件',lv2:'法兰',name:'松套法兰片',model:'PN10',spec:'DN100',std:'GB/T 9119',img:'⭕',dn:100},
+  {id:'M005',cat:'阀门',lv2:'蝶阀',name:'软密封蝶阀',model:'D371X-10',spec:'DN100 PN10',std:'GB/T 12221',img:'🎛️',dn:100},
+  {id:'M006',cat:'阀门',lv2:'闸阀',name:'弹性座封闸阀',model:'Z45X-10',spec:'DN100',std:'GB/T 12221',img:'🚰',dn:100},
+  {id:'M007',cat:'水表',lv2:'机械水表',name:'旋翼式冷水水表',model:'LXS-100',spec:'DN100',std:'GB/T 778',img:'🔢',dn:100},
+  {id:'M008',cat:'抢修',lv2:'哈夫节',name:'不锈钢抢修节',model:'快速抱箍',spec:'DN100',std:'CJ/T 212',img:'🔩',dn:100},
+  {id:'M009',cat:'管材',lv2:'PE给水管',name:'PE100 给水管',model:'SDR17 PN10',spec:'de63 DN50',std:'GB/T 13663.2',img:'🟦',dn:50},
+  {id:'M010',cat:'阀门',lv2:'蝶阀',name:'对夹式蝶阀',model:'D71X-10',spec:'DN50',std:'GB/T 12221',img:'🎛️',dn:50},
+  {id:'M011',cat:'管材',lv2:'球墨铸铁管',name:'K9 级球铁管',model:'T型接口',spec:'DN150',std:'GB/T 13295',img:'⬛',dn:150},
+  {id:'M012',cat:'阀门',lv2:'排气阀',name:'复合式排气阀',model:'CARX-10',spec:'DN150',std:'CJ/T 212',img:'💨',dn:150},
+  {id:'M013',cat:'管材',lv2:'螺旋焊管',name:'螺旋缝焊管',model:'Q235B',spec:'DN200 OD219×6',std:'GB/T 3091',img:'⬛',dn:200},
+  {id:'M014',cat:'管件',lv2:'钢塑转换',name:'钢塑转换接头',model:'PE/钢过渡',spec:'DN20–DN630',std:'GB/T 13663.3',img:'🔗',dn:0,range:[20,630],generic:true},
+  {id:'M015',cat:'水表',lv2:'超声水表',name:'超声波水表',model:'管段式',spec:'DN200',std:'GB/T 778',img:'🔢',dn:200}
+];
+
+/* ========== 2. 通用工具函数（防 NaN / Infinity） ========== */
+const isNum = v => typeof v==='number' && Number.isFinite(v);
+const num = (v,d=0) => { const n=Number(v); return Number.isFinite(n)?n:d; };
+const r1 = v => isNum(v)?Math.round(v*10)/10:0;           // 保留 1 位
+const r2 = v => isNum(v)?Math.round(v*100)/100:0;         // 保留 2 位
+const safe = v => isNum(v)?v:0;                            // 非有限值归零，禁止 NaN 外泄
+const safeDiv = (a,b) => (isNum(b)&&b!==0)?a/b:0;
+const fmt = (v,d=1) => (isNum(v)?v:0).toFixed(d);
+
+/** 在 DN_TABLE 中找最接近的 DN（用于非标输入的兜底） */
+function findDnNear(value){
+  const v=num(value,NaN);
+  if(!Number.isFinite(v)||v<=0) return null;
+  const keys=Object.keys(DN_TABLE).map(Number);
+  let best=null,diff=Infinity;
+  for(const k of keys){
+    const d=Math.abs(k-v);
+    if(d<diff){diff=d;best=k;}
+  }
+  return best;
+}
+
+/* ========== 3. 核心换算函数（纯函数，挂到 window.CALC） ========== */
+
+/** 壁厚 t = de / SDR */
+function deToWall(de,sdr){ const d=num(de),s=num(sdr,17); return s>0?r2(safeDiv(d,s)):0; }
+
+/** 内径 ID = de − 2t */
+function calcInnerDia(de,wall){ return r2(Math.max(0,safe(num(de))-2*safe(num(wall)))); }
+
+/** 流量 Q(m³/h) = v·π·(ID/1000)²/4·3600 */
+function calcFlow(id,velocity){
+  const d=safe(num(id))/1000, v=safe(num(velocity));
+  return r2(v*Math.PI*d*d/4*3600);
+}
+
+/** 管径反算 D(mm) = 1000·√(4·(Q/3600)/(π·v)) */
+function calcDia(flow,velocity){
+  const qs=safe(num(flow))/3600, v=num(velocity,1.2);
+  if(v<=0||qs<=0) return 0;
+  return r1(1000*Math.sqrt(4*qs/(Math.PI*v)));
+}
+
+/** 流量 + 流速 → 推荐 DN（在 DN_TABLE 中取外径/公称值最接近者） */
+function flowToDN(flow,velocity){
+  const dia=calcDia(flow,velocity);
+  if(dia<=0) return {dn:null,calcDia:0,diff:0};
+  const near=findDnNear(dia);
+  let best=near,diff=near?Math.abs(near-dia):Infinity;
+  // 用外径再校验一次，优先选外径更接近的 DN
+  for(const k of Object.keys(DN_TABLE).map(Number)){
+    const row=DN_TABLE[k];
+    const od=Math.max(row.dePlastic||0,row.odSteel||0);
+    const dd=Math.abs(od-dia);
+    if(dd<diff){diff=dd;best=k;}
+  }
+  return {dn:best,calcDia:dia,diff:r1(diff)};
+}
+
+/** 钢管每米重量 W = 0.02466·t·(D−t)，D 为外径 */
+function steelWeight(od,wall){
+  const D=safe(num(od)), t=safe(num(wall));
+  return t>=D?0:r2(0.02466*t*(D-t));
+}
+
+/** SDR → PN（容差匹配，非标返回最接近值与提示） */
+function sdrToPN(sdr){
+  const s=num(sdr,NaN);
+  if(!Number.isFinite(s)||s<=0) return {pn:null,label:'—',standard:false};
+  let best=null,diff=Infinity;
+  for(const k of Object.keys(SDR_PN_MAP).map(Number)){
+    const d=Math.abs(k-s);
+    if(d<diff){diff=d;best=SDR_PN_MAP[k];}
+  }
+  const standard=diff<=0.6;
+  return {pn:best.pn,label:standard?best.pnLabel:('≈'+best.pnLabel+'(非标)'),standard:standard};
+}
+
+/** PN(MPa) → SDR（标准映射） */
+function pnToSDR(pn){
+  const p=num(pn,1.0);
+  let best=17,diff=Infinity;
+  for(const k of Object.keys(SDR_PN_MAP).map(Number)){
+    const d=Math.abs(SDR_PN_MAP[k].pn-p);
+    if(d<diff){diff=d;best=k;}
+  }
+  return best;
+}
+
+/** 按 DN 取经济流速区间 */
+function getVelocityRange(dn){
+  const d=num(dn,100);
+  const r=VELOCITY_RANGE.find(x=>d<=x.maxDn)||VELOCITY_RANGE[VELOCITY_RANGE.length-1];
+  return {min:r.min,max:r.max,scenario:r.scenario,alt:r.alt||null};
+}
+
+/** 钢管 GB/T 3091：按普通管/加厚管系列取壁厚（series: 'normal' | 'heavy'） */
+function steelWallBySeries(dn,series){
+  const d=num(dn,100);
+  const row=DN_TABLE[d]||DN_TABLE[findDnNear(d)]||DN_TABLE[100];
+  const heavy = String(series||'normal').toLowerCase()==='heavy' || series==='加厚管';
+  const fallback=heavy?r2(num(row.wallSteel,4)+1):4.0;
+  const wall=r2(num(heavy?row.wallSteelHeavy:row.wallSteel,fallback));
+  return {
+    wall:wall, series:heavy?'heavy':'normal', label:heavy?'加厚管':'普通管',
+    pn:heavy?2.5:1.6, pnLabel:heavy?'PN25':'PN16',
+    standard:'GB/T 3091 '+(heavy?'加厚系列':'普通系列'),
+    note:heavy?'≈2.5MPa':'≈1.6MPa'
+  };
+}
+
+/** 球铁管 GB/T 13295：优先查表，未列 DN 在相邻锚点间线性插值，最小壁厚 6mm */
+function diWallByK(dn,k){
+  const d=num(dn,100);
+  const level=DI_K_LEVELS[Number(k)]||DI_K_LEVELS[9];
+  const anchorKeys=Object.keys(DI_K_TABLE).map(Number).sort((a,b)=>a-b);
+  let wall=0;
+  if(DI_K_TABLE[d]&&isNum(DI_K_TABLE[d][level.k])){
+    wall=num(DI_K_TABLE[d][level.k],6);
+  }else{
+    let lo=null,hi=null;
+    for(const a of anchorKeys){ if(a<d) lo=a; if(a>d&&hi===null) hi=a; }
+    if(lo!==null&&hi!==null){
+      const w0=num(DI_K_TABLE[lo][level.k],6),w1=num(DI_K_TABLE[hi][level.k],6);
+      wall=w0+(w1-w0)*(d-lo)/(hi-lo);
+    }else{
+      wall=level.k*(0.5+0.001*d); // 国标近似公式 e=K×(0.5+0.001×DN)
+    }
+  }
+  wall=r2(Math.max(6,wall));
+  return {
+    wall:wall, k:level.k, label:level.label, pn:level.pn,
+    pnLabel:'PN'+r1(level.pn*10),
+    standard:'GB/T 13295 '+level.label+'（K 级近似公式/查表）',
+    note:level.note
+  };
+}
+
+/** 取材质的壁厚体系标识 */
+function wallSystem(material){ return WALL_SYSTEM[material]||'sdrpn'; }
+
+/** 外径 → DN（按材质选择塑料 de 或金属 OD 基准） */
+function deToDN(de,material){
+  const d=num(de,NaN);
+  if(!Number.isFinite(d)||d<=0) return null;
+  const isPlastic=['PE100','PE80','PPR'].includes(material);
+  const key=isPlastic?'dePlastic':(material==='DI'?'odDI':'odSteel');
+  let best=null,diff=Infinity;
+  for(const k of Object.keys(DN_TABLE).map(Number)){
+    const row=DN_TABLE[k];
+    const candidates=[row[key]];
+    if(row[key+'Alt']) candidates.push(row[key+'Alt']);
+    for(const od of candidates){
+      const dd=Math.abs(num(od)-d);
+      if(dd<diff){diff=dd;best=k;}
+    }
+  }
+  const tol=Math.max(5,d*0.08);
+  return diff<=tol?best:null;
+}
+
+/** 英寸 → DN（查表，禁止 ×25.4） */
+function inchToDN(inch){
+  const key=String(inch||'').trim();
+  for(const k of Object.keys(DN_TABLE).map(Number)){
+    if(DN_TABLE[k].inch===key||DN_TABLE[k].inchCn===key) return k;
+  }
+  return null;
+}
+
+/** 统一换算：DN + 材质 + (SDR/PN/壁厚) → 完整规格对象 */
+function convertDN(dn,opts){
+  const o=opts||{};
+  const d=num(dn,NaN);
+  if(!Number.isFinite(d)||d<=0) return null;
+
+  // 精确命中优先，否则取最接近（非标兜底）
+  let row=DN_TABLE[d]||null;
+  const nonStandard=!row;
+  if(!row) row=DN_TABLE[findDnNear(d)]||DN_TABLE[100];
+  const realDn=nonStandard?findDnNear(d):d;
+
+  const material=o.material||'PE100';
+  const isPlastic=['PE100','PE80','PPR'].includes(material);
+  const isPE=(material==='PE100'||material==='PE80');
+
+  // 基准外径
+  const outerKey=isPlastic?'dePlastic':(material==='DI'?'odDI':'odSteel');
+  const outerDia=num(row[outerKey],num(row.dePlastic,110));
+
+  let wall=null,sdr=null,pn=null,pnInfo=null;
+  let wallSeries='—',wallStandard='—',wallNote='';
+  const manualWall=isNum(o.wall)&&o.wall>0?num(o.wall):null;
+
+  if(isPlastic){
+    if(manualWall!=null){
+      // 手改壁厚：优先采用，反算 SDR
+      wall=r2(manualWall);
+      sdr=r2(safeDiv(outerDia,wall));
+      pnInfo=sdrToPN(sdr);
+      pn=pnInfo.pn;
+      wallSeries='手改壁厚';wallStandard=(isPE?'GB/T 13663.2':'GB/T 18742.2')+' 手改值';wallNote='按 SDR'+fmt(sdr,2)+' 反算';
+    }else if(isPE){
+      if(isNum(o.sdr)&&o.sdr>0){
+        sdr=num(o.sdr);
+        wall=deToWall(outerDia,sdr);
+        pnInfo=sdrToPN(sdr);
+        pn=pnInfo.pn;
+      }else if(isNum(o.pn)&&o.pn>0){
+        pn=num(o.pn);
+        sdr=pnToSDR(pn);
+        wall=deToWall(outerDia,sdr);
+        pnInfo=sdrToPN(sdr);
+      }else{
+        sdr=17;wall=deToWall(outerDia,17);pnInfo=sdrToPN(17);pn=pnInfo.pn;
+      }
+      wallSeries='SDR'+fmt(sdr,0);wallStandard='GB/T 13663.2 '+wallSeries;wallNote=pnInfo.label;
+    }else{
+      // PPR：按近似 SDR11(PN16) 系列估算
+      sdr=11;wall=deToWall(outerDia,11);pnInfo={pn:1.6,label:'PN16',standard:true};pn=1.6;
+      wallSeries='SDR11';wallStandard='GB/T 18742.2 SDR11';wallNote='PN16 常用系列';
+    }
+  }else{
+    // 金属：钢/衬塑按 GB/T 3091 普通/加厚系列，球铁按 GB/T 13295 K 级；sdr 恒为 null
+    const isDI=(material==='DI');
+    const wi=isDI?diWallByK(realDn,o.diK):steelWallBySeries(realDn,o.steelSeries);
+    wall=manualWall!=null?r2(manualWall):wi.wall;
+    wallSeries=manualWall!=null?(wi.label+'（手改）'):wi.label;
+    wallStandard=manualWall!=null?(wi.standard+'·手改值'):wi.standard;
+    wallNote=wi.note;
+    sdr=null;
+    pn=wi.pn; // 压力等级真实反映壁厚系列，不沿用塑料管遗留的 PN 状态
+    pnInfo={pn:pn,label:wi.pnLabel,standard:true};
+  }
+
+  const id=calcInnerDia(outerDia,wall);
+  const flowRef=calcFlow(id,num(o.velocity,1.2));
+  const weight=(material==='STEEL'||material==='LINED')?steelWeight(outerDia,wall):null;
+  const std=STD_MAP[material]||STD_MAP.PE100;
+
+  return {
+    dn:realDn, inputDn:d, nonStandard:nonStandard,
+    material:material, isPlastic:isPlastic, isPE:isPE,
+    inch:row.inch, inchCn:row.inchCn,
+    outerDia:r2(outerDia), altOuter:(material==='STEEL'&&row.odSteelAlt)?row.odSteelAlt:(isPlastic&&row.dePlasticAlt?row.dePlasticAlt:null),
+    wall:wall, sdr:sdr, pn:pn, pnLabel:pnInfo?pnInfo.label:'—',pnStandard:pnInfo?pnInfo.standard:true,
+    wallSeries:wallSeries, wallStandard:wallStandard, wallNote:wallNote, wallSystem:wallSystem(material),
+    id:id, flowRef:flowRef, weight:weight, std:std,
+    velocity:num(o.velocity,1.2), mode:o.mode||'dn'
+  };
+}
+
+/** 动态易错提示 */
+function getTips(ctx){
+  return TIP_RULES.filter(r=>{try{return !!r.when(ctx||{});}catch(e){return false;}})
+                  .map(r=>({id:r.id,tone:r.tone,text:r.text}));
+}
+
+/** 规格字段与 DN 匹配（支持 DN20–DN630 范围写法、de/OD 模糊兜底） */
+function matchDn(spec,dn){
+  const s=String(spec||'');
+  const rangeRe=/DN\s*(\d+)\s*[–\-~至]\s*(?:DN\s*)?(\d+)/gi;
+  let m;
+  while((m=rangeRe.exec(s))!==null){
+    const lo=Number(m[1]),hi=Number(m[2]);
+    if(Number.isFinite(lo)&&Number.isFinite(hi)&&dn>=lo&&dn<=hi) return true;
+  }
+  const singleRe=/DN\s*(\d+)/gi;
+  while((m=singleRe.exec(s))!==null){
+    if(Number(m[1])===dn) return true;
+  }
+  const deM=s.match(/de\s*(\d+(?:\.\d+)?)/i);
+  if(deM){
+    const back=deToDN(Number(deM[1]),'PE100');
+    if(back===dn) return true;
+  }
+  const odM=s.match(/OD\s*(\d+(?:\.\d+)?)/i);
+  if(odM){
+    const back=deToDN(Number(odM[1]),'STEEL');
+    if(back===dn) return true;
+  }
+  return false;
+}
+
+/** 按 DN 筛选材料卡（跨口径通用件 generic 不列入具体 DN，避免每个结果重复出现） */
+function getMaterials(dn){
+  return MATERIAL_SAMPLES.filter(x=>{
+    if(x.generic) return false;
+    if(x.range) return dn>=x.range[0]&&dn<=x.range[1];
+    return matchDn(x.spec,dn)||x.dn===dn;
+  });
+}
+
+/* === CALC_CORE_END === */
+
+/* 挂载到 window 供 QA 定向测试 */
+const CALC={
+  DN_TABLE,SDR_PN_MAP,STD_MAP,VELOCITY_RANGE,TIP_RULES,MATERIAL_SAMPLES,DI_K_TABLE,DI_K_LEVELS,WALL_SYSTEM,
+  convertDN,deToDN,inchToDN,flowToDN,deToWall,calcInnerDia,calcFlow,calcDia,
+  steelWeight,sdrToPN,pnToSDR,getVelocityRange,getTips,matchDn,getMaterials,findDnNear,
+  steelWallBySeries,diWallByK,wallSystem
+};
+if(typeof window!=='undefined'){window.CALC=CALC;}
+
+/* ========== 4. 渲染与状态 ========== */
+
+/** 材料卡极简内联 SVG 图标（按类别区分，跨环境一致，不依赖 emoji 字体 / 外部图） */
+function iconSVG(cat){
+  var blue='#0B5CAD', gold='#A57C2E', fill='#EDF3FB', body='';
+  var head='<svg viewBox="0 0 40 40" width="34" height="34" role="img" aria-label="'+cat+'图标" xmlns="http://www.w3.org/2000/svg">';
+  if(cat==='管材')      body='<circle cx="20" cy="20" r="12" fill="'+fill+'" stroke="'+blue+'" stroke-width="2.5"/><circle cx="20" cy="20" r="6.5" fill="#fff" stroke="'+blue+'" stroke-width="2"/>';
+  else if(cat==='管件') body='<path d="M9 20 h9 a7 7 0 0 1 7 7 v4" fill="none" stroke="'+blue+'" stroke-width="4" stroke-linecap="round"/><circle cx="9" cy="20" r="3.2" fill="'+gold+'"/><circle cx="25" cy="31" r="3.2" fill="'+gold+'"/>';
+  else if(cat==='阀门') body='<rect x="8" y="16" width="24" height="9" rx="2" fill="'+fill+'" stroke="'+blue+'" stroke-width="2"/><path d="M20 16 v-6" stroke="'+blue+'" stroke-width="2.5"/><circle cx="20" cy="8" r="4.5" fill="none" stroke="'+gold+'" stroke-width="2.5"/><path d="M15.5 8 h9 M20 3.5 v9" stroke="'+gold+'" stroke-width="1.4"/>';
+  else if(cat==='水表') body='<circle cx="20" cy="21" r="11" fill="#fff" stroke="'+blue+'" stroke-width="2.5"/><path d="M13 8 h14" stroke="'+blue+'" stroke-width="2.5" stroke-linecap="round"/><path d="M20 21 l5 -6" stroke="'+gold+'" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="21" r="1.8" fill="'+blue+'"/>';
+  else if(cat==='抢修') body='<path d="M11 13 a11 11 0 0 0 0 14" fill="none" stroke="'+blue+'" stroke-width="3"/><path d="M29 13 a11 11 0 0 1 0 14" fill="none" stroke="'+blue+'" stroke-width="3"/><path d="M11 13 h18 M11 27 h18" stroke="'+gold+'" stroke-width="2.5" stroke-linecap="round"/>';
+  else                  body='<path d="M20 6 L32 13 V27 L20 34 L8 27 V13 Z" fill="'+fill+'" stroke="'+blue+'" stroke-width="2.5"/><circle cx="20" cy="20" r="5" fill="#fff" stroke="'+gold+'" stroke-width="2"/>';
+  return head+body+'</svg>';
+}
+
+/** 当前输入状态 */
+const state={
+  mode:'dn', dn:100, de:'', inch:'4', flow:'', velocity:1.2,
+  material:'PE100', sdr:17, pn:1.0, wall:null, manualWall:false,
+  steelSeries:'normal', diK:9
+};
+
+const STORAGE={history:'ws_calc_history',fav:'ws_calc_fav'};
+
+function storeGet(key){
+  try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):[];}catch(e){return [];}
+}
+function storeSet(key,arr){
+  try{localStorage.setItem(key,JSON.stringify(arr));}catch(e){/* file:// 下禁用存储时静默降级 */}
+}
+function storeAdd(key,item,limit){
+  const arr=storeGet(key).filter(x=>JSON.stringify(x)!==JSON.stringify(item));
+  arr.unshift(item);
+  const out=arr.slice(0,limit);
+  storeSet(key,out);
+  return out;
+}
+
+/** 序列化当前输入（用于存储/回显） */
+function snapshot(){return JSON.parse(JSON.stringify(state));}
+function signature(s){return s.mode+':'+s.material+':dn'+s.dn+':de'+s.de+':in'+s.inch+':q'+s.flow;}
+
+/** Toast 提示 */
+let toastTimer=null;
+function toast(msg){
+  const el=document.getElementById('toast');
+  if(!el) return;
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),1900);
+}
+
+/** 复制标准号（clipboard + execCommand fallback） */
+function copyText(text){
+  const done=()=>{const m=text.match(/^(GB\/T\s+[\d.]+(?:-\d{4})?(?:（[^）]*）)?)/);toast('✓ 标准号已复制：'+(m?m[1]:text.split(' ')[0]));};
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallback());
+  }else{fallback();}
+  function fallback(){
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      const ok=document.execCommand('copy');
+      document.body.removeChild(ta);
+      ok?done():toast('复制失败，请手动选择文本');
+    }catch(e){toast('复制失败，请手动选择文本');}
+  }
+}
+
+/* ---- 输入区动态渲染 ---- */
+function renderModeFields(){
+  const box=document.getElementById('modeFields');
+  let html='';
+  if(state.mode==='dn'){
+    const opts=Object.keys(DN_TABLE).map(Number).sort((a,b)=>a-b)
+      .map(d=>`<option value="${d}" ${d===state.dn?'selected':''}>DN${d} · ${DN_TABLE[d].inchCn}(${DN_TABLE[d].inch}″)</option>`).join('');
+    html+=`<div class="field">
+      <label class="lbl" for="dnSel">公称直径 DN <span class="req">*</span>
+        <details class="term-help"><summary>?</summary><div class="term-body"><b>DN 就是管子的「型号大小」</b>，买阀门、法兰时说的规格。它<b>不是</b>拿尺子量出来的实际尺寸——比如 DN100 的塑料管，外径其实是 110mm。</div></details>
+      </label>
+      <select class="ctrl" id="dnSel">${opts}</select>
+    </div>`;
+  }else if(state.mode==='de'){
+    const isPlastic=['PE100','PE80','PPR'].includes(state.material);
+    const label=isPlastic?'塑料外径 de（mm）':(state.material==='DI'?'球铁外径 OD（mm）':'金属外径 OD（mm）');
+    html+=`<div class="field">
+      <label class="lbl" for="deInput">${label} <span class="req">*</span>
+        <details class="term-help"><summary>?</summary><div class="term-body"><b>外径就是管子最外面一圈的直径</b>。塑料管写作 de，钢管/铸铁管写作 OD 或 Φ。它和 DN 不一样，比如 de110 大约对应 DN100。</div></details>
+      </label>
+      <input class="ctrl" type="number" id="deInput" min="10" max="2500" step="0.1" value="${state.de}" placeholder="如 110 / 108 / 159">
+    </div>`;
+  }else if(state.mode==='inch'){
+    const inches=[];
+    for(const k of Object.keys(DN_TABLE).map(Number)){
+      const i=DN_TABLE[k].inch;
+      if(!inches.includes(i)) inches.push(i);
+    }
+    const opts=inches.map(i=>`<option value="${i}" ${i===state.inch?'selected':''}>${i}″ · ${DN_TABLE[Object.keys(DN_TABLE).map(Number).find(k=>DN_TABLE[k].inch===i)].inchCn}</option>`).join('');
+    html+=`<div class="field">
+      <label class="lbl" for="inchSel">英寸规格（几寸管）<span class="req">*</span>
+        <details class="term-help"><summary>?</summary><div class="term-body">这是老叫法：<b>4分＝DN15，6分＝DN20，1寸＝DN25，4寸＝DN100</b>。不能简单用英寸×25.4 算 DN，本工具直接查表，更准。</div></details>
+      </label>
+      <select class="ctrl" id="inchSel">${opts}</select>
+    </div>`;
+  }else{
+    html+=`<div class="grid-2">
+      <div class="field">
+        <label class="lbl" for="flowInput">每小时流量 Q（m³/h）<span class="req">*</span>
+          <details class="term-help"><summary>?</summary><div class="term-body">就是一小时要流过多少水，<b>1 立方米＝1 吨</b>。比如填 200，表示每小时 200 吨水。</div></details>
+        </label>
+        <input class="ctrl" type="number" id="flowInput" min="0.1" max="50000" step="1" value="${state.flow}" placeholder="如 200">
+      </div>
+      <div class="field">
+        <label class="lbl" for="velInput">流速 v（m/s）
+          <details class="term-help"><summary>?</summary><div class="term-body">水在管子里流得多快。<b>不知道就填 1.2</b>（常用值）；太快会冲刷管道，太慢浪费管材。</div></details>
+        </label>
+        <input class="ctrl" type="number" id="velInput" min="0.3" max="3" step="0.1" value="${state.velocity}" placeholder="1.2">
+      </div>
+    </div>`;
+  }
+  box.innerHTML=html;
+  bindModeFields();
+}
+
+/** 统一归一当前输入到 DN 与选项 */
+function resolveInput(){
+  let dn=null,calcDiaVal=null,nonStd=false;
+  if(state.mode==='dn'){
+    dn=num(state.dn,100);
+  }else if(state.mode==='de'){
+    dn=CALC.deToDN(state.de,state.material);
+  }else if(state.mode==='inch'){
+    dn=CALC.inchToDN(state.inch);
+  }else{
+    const q=num(state.flow,0),v=num(state.velocity,1.2);
+    if(q>0&&v>0){
+      const r=CALC.flowToDN(q,v);
+      dn=r.dn;calcDiaVal=r.calcDia;
+      nonStd=dn==null;
+    }
+  }
+  return {dn:dn,calcDia:calcDiaVal,nonStd:nonStd};
+}
+
+/* ---- 主渲染：结果区 ---- */
+function render(){
+  const inp=resolveInput();
+  if(inp.dn==null){
+    document.getElementById('resultPanel').innerHTML=`<div class="panel"><div class="empty-state">
+      ⚠️ 无法从当前输入归一到标准 DN<br><small>请检查外径/流量输入，或改用「按 DN」入口</small></div></div>`;
+    return;
+  }
+
+  // 若由 de/inch/flow 入口得到 DN，同步 DN 状态供复核
+  if(state.mode!=='dn'&&inp.dn) state.dn=inp.dn;
+
+  const r=CALC.convertDN(inp.dn,{
+    material:state.material,sdr:state.sdr,pn:state.pn,
+    wall:state.manualWall?state.wall:null,
+    steelSeries:state.steelSeries||'normal', diK:state.diK||9,
+    velocity:num(state.velocity,1.2),mode:state.mode
+  });
+  if(!r){document.getElementById('resultPanel').innerHTML='<div class="panel"><div class="empty-state">参数无效</div></div>';return;}
+
+  const vr=CALC.getVelocityRange(r.dn);
+  const vCur=num(state.velocity,1.2);
+  // W1 修复：既不在主区间、也不在备选（干管/实测）区间才算超出，避免误报
+  const inMain=vCur>=vr.min&&vCur<=vr.max;
+  const inAlt=!!(vr.alt&&vCur>=vr.alt.min&&vCur<=vr.alt.max);
+  const vOut=!inMain&&!inAlt;
+  const tips=CALC.getTips({mode:state.mode,material:r.material,isPlastic:r.isPlastic,isPE:r.isPE,dn:r.dn,sdr:r.sdr,pn:r.pn});
+  const mats=CALC.getMaterials(r.dn);
+
+  // DN 主结果 + 6 项参数卡（共七项结果，DN 大字单列）
+  const sev=[
+    {k:r.isPlastic?'外径 de':'外径 OD',tip:'管子最外面一圈的实际直径',v:(r.isPlastic?'de':'OD')+r.outerDia,s:r.altOuter?('另见 '+r.altOuter):'mm',hl:false},
+    {k:'英制',tip:'老叫法：4分=DN15，1寸=DN25，4寸=DN100',v:r.inchCn,s:r.inch+'″ NPS',hl:false},
+    {k:'内径 ID',tip:'水真正流过的内圈直径，决定能流多少水',v:fmt(r.id,1),s:'mm · 过流基准',hl:false},
+    {k:'壁厚 t',tip:r.wallStandard+'（'+r.wallNote+'）',v:fmt(r.wall,2),s:'mm · '+r.wallSeries,hl:false},
+    {k:'SDR·PN',tip:'SDR 数字越小壁越厚；PN10 约等于 10 公斤压力',v:r.sdr?('SDR'+(Number.isInteger(r.sdr)?r.sdr:fmt(r.sdr,1))):('PN'+fmt(r.pn,1)),s:r.pnLabel,hl:false},
+    {k:'流量',tip:'按当前流速，这根管一小时大约能流多少水',v:fmt(r.flowRef,1),s:'m³/h @'+fmt(vCur,1)+'m/s',hl:false}
+  ].map(x=>`<div class="sev ${x.hl?'hl':''}" title="${x.tip||''}"><div class="k">${x.k}</div><div class="v">${x.v}</div><div class="sub">${x.s}</div></div>`).join('');
+
+  // 材质对照表
+  const cmpMaterials=['PE100','PPR','STEEL','DI'];
+  const cmpRows=cmpMaterials.map(m=>{
+    const rr=CALC.convertDN(r.dn,{material:m,sdr:state.sdr,pn:state.pn,steelSeries:'normal',diK:9,velocity:vCur});
+    if(!rr) return '';
+    const outer=(m==='STEEL'||m==='DI')?('OD'+rr.outerDia):('de'+rr.outerDia);
+    const isCur=m===state.material;
+    const diffCls=(m==='STEEL'&&r.dn===100)?' class="diff"':'';
+    return `<tr class="${isCur?'cur':''}"><td><b>${m}</b> ${isCur?'<span class="badge">当前</span>':''}</td>
+      <td${diffCls}>${outer}${m==='STEEL'&&rr.altOuter?' / '+rr.altOuter:''}</td>
+      <td>${fmt(rr.wall,2)} mm · ${rr.wallSeries}</td><td>${rr.std.no}</td></tr>`;
+  }).join('');
+
+  // 水力参考
+  const vid=calcDia(num(state.flow,0),vCur);
+  const hydro=`
+    <div class="hbox"><div class="hb-k">最大推荐流量（按经济流速上限 ${vr.max} m/s）</div>
+      <div class="hb-v">${fmt(CALC.calcFlow(r.id,vr.max),1)} <span class="u">m³/h</span></div>
+      <div class="hb-s">当前流速下的流量见上方结果卡</div></div>
+    <div class="hbox"><div class="hb-k">钢管每米重量（理论）</div>
+      <div class="hb-v">${r.weight!=null?fmt(r.weight,2):'—'} <span class="u">${r.weight!=null?'kg/m':''}</span></div>
+      <div class="hb-s">${r.weight!=null?'W=0.02466·t·(D−t)':'仅钢管/衬塑管适用'}</div></div>
+    <div class="hbox ${vOut?'warnbox':''}"><div class="hb-k">经济流速参考区间</div>
+      <div class="hb-v">${vr.min} – ${vr.max} <span class="u">m/s</span></div>
+      <div class="hb-s">${vr.scenario}${vr.alt?' / 或 '+vr.alt.min+'–'+vr.alt.max+'（'+vr.alt.scenario+'）':''}${vOut?' · ⚠️当前超出区间':''}</div></div>`;
+
+  // 标准号：金属管附带壁厚系列/等级依据
+  const stdWithSeries=(r.material==='STEEL'||r.material==='LINED')
+    ? r.std.no+'-2015（'+r.wallSeries+'系列）'
+    : (r.material==='DI'?r.std.no+'（'+r.wallSeries+'）':r.std.no);
+  const stdRow=`<div class="std-row"><div class="stxt"><b>${stdWithSeries}</b><span>${r.std.name}</span></div>
+    <button class="btn-copy" data-action="copy" data-text="${stdWithSeries} ${r.std.name}"><span class="ico"></span>一键复制</button></div>`;
+
+  // 提示
+  const tipsHtml=tips.map(t=>`<div class="tip ${t.tone==='neutral'?'neutral':''}"><span class="ti"></span><span>${t.text}</span></div>`).join('');
+
+  // 材料卡
+  const matsHtml=mats.length?`<div class="mat-grid">${mats.map(m=>`
+    <div class="mat-card" data-action="mat" data-id="${m.id}">
+      <div class="mat-thumb">${iconSVG(m.cat)}</div>
+      <div class="mat-info"><div class="mn">${m.name}</div><div class="ms">${m.spec}</div>
+        <div class="mc"><span>${m.cat}</span><span>·</span><span>${m.lv2}</span></div></div>
+      <div class="mat-detail" id="detail-${m.id}">
+        <div class="dl"><span>型号</span><b>${m.model}</b></div>
+        <div class="dl"><span>规格</span><b>${m.spec}</b></div>
+        <div class="dl"><span>标准</span><b>${m.std}</b></div>
+        <div class="dl"><span>分类</span><b>${m.cat} / ${m.lv2}</b></div>
+        <div class="dl"><span>卡片ID</span><b>${m.id}</b></div>
+      </div></div>`).join('')}</div>`:`<div class="no-mat">暂无匹配 DN${r.dn} 的示例材料卡</div>`;
+
+  const nonStdNote=r.nonStandard?`<div class="tip neutral"><span class="ti"></span><span>输入的 DN${r.inputDn} 非标准系列，已按最接近的 <b>DN${r.dn}</b> 估算；采购请以设计文件为准。</span></div>`:'';
+  const flowNote=(state.mode==='flow'&&vid>0)?`<div class="tip neutral"><span class="ti"></span><span>按 Q=${fmt(num(state.flow,0),1)} m³/h、v=${fmt(vCur,1)} m/s 反算内径需求 <b>${fmt(vid,1)} mm</b>，推荐 <b>DN${r.dn}</b>；请核对实际管材内径是否满足。</span></div>`:'';
+
+  // D. 一句话人话结论：按入口给主句，补充规格指向下方参数卡
+  let sumMain='';
+  if(state.mode==='dn') sumMain=`按 <b>DN${r.dn}</b> 选型，落在标准公称口径系列`;
+  else if(state.mode==='de') sumMain=`外径 ${fmt(num(state.de,0),0)}mm 归入 <b>DN${r.dn}</b> 标准系列`;
+  else if(state.mode==='inch') sumMain=`${r.inch}″ 英制归入 <b>DN${r.dn}</b> 标准口径`;
+  else sumMain=`流量 ${fmt(num(state.flow,0),1)} m³/h 对应 <b>DN${r.dn}</b> 经济口径`;
+  const sumSub='壁厚、内径等完整规格见下方参数卡';
+
+  document.getElementById('resultPanel').innerHTML=`
+    <!-- 核心结果：唯一视觉焦点 -->
+    <div class="result-card primary">
+      <div class="rc-hd"><span class="dot"></span><h3>结果</h3>
+        <span class="rc-tag">${state.material} · ${r.pnLabel}</span></div>
+      <div class="rc-bd">
+        <div class="dn-hero" role="group" aria-label="换算结果">
+          <div class="big"><span class="dn-pref">DN</span><span class="dn-num">${r.dn}</span></div>
+          <div class="cap"><span class="dn-lead">公称直径</span><b>${r.inchCn}</b><span class="cap-sub">英制 ${r.inch}″</span></div>
+        </div>
+        <div class="plain-summary"><span class="sum-tag">结论</span><span class="sum-main">${sumMain}</span><span class="sum-sub">${sumSub}</span></div>
+        <div class="result-grid">${sev}</div>
+        ${nonStdNote}${flowNote}
+      </div></div>
+
+    <!-- 详情章节一：对照与参考 -->
+    <div class="detail-group">
+      <div class="detail-title">对照参考</div>
+      <details class="detail-row">
+        <summary><span class="d-ico ico-search"></span>材质外径对照<span class="d-meta">同一 DN${r.dn}</span><span class="fold-arrow"></span></summary>
+        <div class="rc-bd"><div class="tbl-wrap"><table class="tbl">
+          <thead><tr><th>材质系列</th><th>外径标注</th><th>壁厚（钢:普通 / 球铁:K9）</th><th>执行标准</th></tr></thead>
+          <tbody>${cmpRows}</tbody></table></div>
+          ${r.dn===100?'<div class="tip" style="margin:12px 0 0"><span class="ti ti-pin"></span><span><b>De110（PE）与 OD108（钢管）差 2mm</b>，法兰不通用，跨材质连接须用转换接头。</span></div>':''}
+        </div></details>
+      <details class="detail-row">
+        <summary><span class="d-ico ico-drop"></span>水力与重量<span class="d-meta">流量 · 重量 · 流速</span><span class="fold-arrow"></span></summary>
+        <div class="rc-bd"><div class="hydro">${hydro}</div></div></details>
+    </div>
+
+    <!-- 详情章节二：采购与施工 -->
+    <div class="detail-group">
+      <div class="detail-title">采购施工</div>
+      <details class="detail-row">
+        <summary><span class="d-ico ico-doc"></span>执行标准<span class="d-meta">${r.std.no}</span><span class="fold-arrow"></span></summary>
+        <div class="rc-bd">${stdRow}</div></details>
+      <details class="detail-row">
+        <summary><span class="d-ico ico-warn"></span>常见误区<span class="d-meta">${tips.length} 条</span><span class="fold-arrow"></span></summary>
+        <div class="rc-bd">${tipsHtml}</div></details>
+      <details class="detail-row">
+        <summary><span class="d-ico ico-tool"></span>材料卡<span class="d-meta">${mats.length} 条</span><span class="fold-arrow"></span></summary>
+        <div class="rc-bd">${matsHtml}</div></details>
+      <details class="detail-row">
+        <summary><span class="d-ico ico-star"></span>收藏规格<span class="d-meta">仅存本机</span><span class="fold-arrow"></span></summary>
+        <div class="rc-bd" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <button class="btn-ghost" data-action="fav" style="max-width:200px"><span class="ico"></span>收藏当前组合</button>
+          <span style="font-size:12px;color:var(--ink-3)">保存后可在左侧一键调出</span>
+        </div></details>
+    </div>
+  `;
+}
+
+/* ---- 结果区事件委托 ---- */
+document.getElementById('resultPanel').addEventListener('click',function(e){
+  const btn=e.target.closest('[data-action]');
+  if(!btn) return;
+  const action=btn.getAttribute('data-action');
+  if(action==='copy'){copyText(btn.getAttribute('data-text')||'');}
+  if(action==='fav'){addFav();}
+  if(action==='mat'){
+    const card=btn.closest('.mat-card');
+    const detail=document.getElementById('detail-'+card.getAttribute('data-id'));
+    if(detail) detail.classList.toggle('open');
+  }
+});
+
+/* ---- 收藏 / 历史 ---- */
+function addFav(){
+  const s=snapshot();
+  storeAdd(STORAGE.fav,s,30);
+  renderStorage();
+  toast('⭐ 已收藏 DN'+s.dn+' · '+s.material);
+}
+function addHistory(){
+  const s=snapshot();
+  storeAdd(STORAGE.history,s,20);
+  renderStorage();
+}
+function renderStorage(){
+  const fav=storeGet(STORAGE.fav),his=storeGet(STORAGE.history);
+  const favEl=document.getElementById('favList');
+  const hisEl=document.getElementById('historyList');
+  favEl.innerHTML=fav.length?fav.map((s,i)=>`<button class="chip fav" data-idx="${i}" data-kind="fav">DN${s.dn}·${s.material}·${s.mode==='flow'?'Q'+s.flow:'入口'+s.mode}</button>`).join(''):'<span class="empty-mini">暂无收藏</span>';
+  hisEl.innerHTML=his.length?his.slice(0,12).map((s,i)=>`<button class="chip" data-idx="${i}" data-kind="his">DN${s.dn}·${s.material}·${s.mode}</button>`).join(''):'<span class="empty-mini">暂无记录</span>';
+}
+function restoreFrom(kind,idx){
+  const arr=storeGet(kind==='fav'?STORAGE.fav:STORAGE.history);
+  const s=arr[idx];
+  if(!s) return;
+  Object.assign(state,s);
+  document.getElementById('materialSel').value=state.material;
+  document.getElementById('sdrSel').value=String(state.sdr);
+  document.getElementById('pnSel').value=String(state.pn);
+  document.getElementById('wallInput').value=state.manualWall?state.wall:'';
+  syncPeVisibility();
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.getAttribute('data-mode')===state.mode));
+  renderModeFields();render();
+  toast('已调出 DN'+state.dn+' 规格');
+}
+
+/* ========== 5. 事件绑定 ========== */
+
+/** 绑定动态输入区事件 */
+function bindModeFields(){
+  const dnSel=document.getElementById('dnSel');
+  if(dnSel) dnSel.addEventListener('change',e=>{state.dn=num(e.target.value,100);render();addHistory();});
+  const deInput=document.getElementById('deInput');
+  if(deInput) deInput.addEventListener('input',e=>{state.de=e.target.value;render();});
+  if(deInput) deInput.addEventListener('change',()=>addHistory());
+  const inchSel=document.getElementById('inchSel');
+  if(inchSel) inchSel.addEventListener('change',e=>{state.inch=e.target.value;render();addHistory();});
+  const flowInput=document.getElementById('flowInput');
+  if(flowInput) flowInput.addEventListener('input',e=>{state.flow=e.target.value;render();});
+  const velInput=document.getElementById('velInput');
+  if(velInput) velInput.addEventListener('input',e=>{state.velocity=num(e.target.value,1.2);render();});
+  if(flowInput) flowInput.addEventListener('change',()=>addHistory());
+}
+
+/** 高级设置按材质显示对应壁厚体系：塑料 SDR/PN、钢及衬塑 普通/加厚、球铁 K 级 */
+function syncPeVisibility(){
+  const sys=wallSystem(state.material);
+  const pe=sys==='sdrpn';
+  const peFields=document.getElementById('peFields');
+  if(!peFields) return;
+  peFields.removeAttribute('hidden');
+  const peGrid=document.getElementById('peGrid'),peNote=document.getElementById('peNote');
+  const steelField=document.getElementById('steelSeriesField'),diField=document.getElementById('diKField');
+  if(peGrid) peGrid.hidden=!pe;
+  if(peNote) peNote.hidden=!pe;
+  if(steelField) steelField.hidden=(sys!=='steelSeries');
+  if(diField) diField.hidden=(sys!=='kLevel');
+  const sSel=document.getElementById('steelSeriesSel'),dSel=document.getElementById('diKSel');
+  if(sSel) sSel.value=state.steelSeries||'normal';
+  if(dSel) dSel.value=String(state.diK||9);
+  // 金属管必须让用户看到壁厚系列选择，自动展开；PE 若有手改壁厚也展开
+  if(!pe||state.manualWall) peFields.open=true;
+}
+
+/** A. 切换入口后高亮第一个该填的框，减少「不知道点哪」 */
+function highlightFirstField(){
+  const first={dn:'dnSel',de:'deInput',inch:'inchSel',flow:'flowInput'}[state.mode];
+  const el=first?document.getElementById(first):null;
+  if(!el) return;
+  el.classList.remove('focus-flash');
+  void el.offsetWidth; // 强制重排，保证连续点击也能重播高亮动画
+  el.classList.add('focus-flash');
+  if(el.scrollIntoView) el.scrollIntoView({block:'center',behavior:'smooth'});
+}
+
+const MODE_LABEL={dn:'我知道 DN',de:'我知道外径',inch:'我知道英寸',flow:'我只知道流量'};
+
+/** 模式切换（互斥，清空其他入口的输入值） */
+function switchMode(m){
+  if(!m) return;
+  state.mode=m;
+  // 切换清空其他入口值，保留材质与 SDR/PN 设置
+  state.de='';state.flow='';state.inch='4';state.velocity=1.2;
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active',t.getAttribute('data-mode')===m));
+  renderModeFields();render();
+  highlightFirstField();
+  toast('已选：'+(MODE_LABEL[m]||m));
+}
+
+document.getElementById('modeTabs').addEventListener('click',e=>{
+  const tab=e.target.closest('.mode-tab');
+  if(!tab) return;
+  const m=tab.getAttribute('data-mode');
+  if(m===state.mode) return;
+  switchMode(m);
+});
+
+/** 材质切换 */
+document.getElementById('materialSel').addEventListener('change',e=>{
+  state.material=e.target.value;
+  state.manualWall=false;state.wall=null;
+  document.getElementById('wallInput').value='';
+  syncPeVisibility();renderModeFields();render();
+});
+
+/** 钢管壁厚系列（GB/T 3091 普通/加厚） */
+document.getElementById('steelSeriesSel').addEventListener('change',e=>{
+  state.steelSeries=e.target.value==='heavy'?'heavy':'normal';
+  state.manualWall=false;state.wall=null;
+  document.getElementById('wallInput').value='';
+  document.getElementById('wallHint').textContent='留空按所选系列自动取值；手改以实际标注为准';
+  render();
+});
+
+/** 球铁 K 级（GB/T 13295） */
+document.getElementById('diKSel').addEventListener('change',e=>{
+  state.diK=num(e.target.value,9);
+  state.manualWall=false;state.wall=null;
+  document.getElementById('wallInput').value='';
+  document.getElementById('wallHint').textContent='留空按 K 级自动取值；手改以实际标注为准';
+  render();
+});
+
+/** SDR 变更 → 同步 PN */
+document.getElementById('sdrSel').addEventListener('change',e=>{
+  state.sdr=num(e.target.value,17);
+  const info=CALC.sdrToPN(state.sdr);
+  state.pn=info.pn!=null?info.pn:1.0;
+  document.getElementById('pnSel').value=String(state.pn);
+  state.manualWall=false;state.wall=null;
+  document.getElementById('wallInput').value='';
+  render();
+});
+
+/** PN 变更 → 同步 SDR */
+document.getElementById('pnSel').addEventListener('change',e=>{
+  state.pn=num(e.target.value,1.0);
+  state.sdr=CALC.pnToSDR(state.pn);
+  document.getElementById('sdrSel').value=String(state.sdr);
+  state.manualWall=false;state.wall=null;
+  document.getElementById('wallInput').value='';
+  render();
+});
+
+/** 壁厚手改：塑料反算 SDR；金属直接采用手改值（不再反算 SDR） */
+document.getElementById('wallInput').addEventListener('input',e=>{
+  const w=num(e.target.value,0);
+  if(w>0){
+    state.wall=w;state.manualWall=true;
+    if(wallSystem(state.material)==='sdrpn'){
+      const dn=state.dn||100;
+      const row=DN_TABLE[dn]||DN_TABLE[100];
+      const outer=row.dePlastic;
+      state.sdr=r2(safeDiv(outer,w));
+      const info=CALC.sdrToPN(state.sdr);
+      state.pn=info.pn!=null?info.pn:state.pn;
+      document.getElementById('sdrSel').value=String(Math.round(state.sdr));
+      document.getElementById('pnSel').value=String(state.pn);
+      document.getElementById('wallHint').textContent='已按手改壁厚反算 SDR≈'+fmt(state.sdr,2)+'，PN 参考 '+info.label;
+    }else{
+      document.getElementById('wallHint').textContent='已按手改壁厚 '+fmt(w,2)+' mm 计算（金属管无 SDR）';
+    }
+  }else{
+    state.manualWall=false;state.wall=null;
+    document.getElementById('wallHint').textContent='留空按所选系列自动取值；手改以实际标注为准';
+  }
+  render();
+});
+
+/** 立即换算按钮 */
+document.getElementById('calcBtn').addEventListener('click',()=>{render();addHistory();toast('✓ 换算完成');});
+
+/** 收藏/历史列表点击与清空 */
+document.getElementById('favList').addEventListener('click',e=>{
+  const c=e.target.closest('.chip');if(!c) return;restoreFrom('fav',num(c.getAttribute('data-idx'),0));
+});
+document.getElementById('historyList').addEventListener('click',e=>{
+  const c=e.target.closest('.chip');if(!c) return;restoreFrom('his',num(c.getAttribute('data-idx'),0));
+});
+document.getElementById('clearFavBtn').addEventListener('click',()=>{storeSet(STORAGE.fav,[]);renderStorage();toast('已清空收藏');});
+document.getElementById('clearHistoryBtn').addEventListener('click',()=>{storeSet(STORAGE.history,[]);renderStorage();toast('已清空历史');});
+
+/* ========== 6. 初始化 ========== */
+(function init(){
+  document.getElementById('materialSel').value=state.material;
+  document.getElementById('sdrSel').value=String(state.sdr);
+  document.getElementById('pnSel').value=String(state.pn);
+  syncPeVisibility();
+  renderModeFields();
+  renderStorage();
+  render();
+})();
+</script>
+<script>
+/* 移动端手势锁定：与宿主平台同款口径——禁 iOS 捏合/双击缩放、多指手势、横滑返回；
+   保留单指纵向滚动、点击、输入；放行表格/分类条等真实横向滚动容器，避免误伤功能。
+   桌面浏览器不响应 touch/gesture 事件，Ctrl+/- 缩放不受影响。 */
+(function(){
+  "use strict";
+  ["gesturestart","gesturechange","gestureend"].forEach(function(t){
+    document.addEventListener(t,function(e){e.preventDefault();},{passive:false});
+  });
+  /* 多指触控一律拦截（缩放/多指手势） */
+  document.addEventListener("touchmove",function(e){
+    if(e.touches&&e.touches.length>1&&e.cancelable) e.preventDefault();
+  },{passive:false});
+  /* 从触点向上找可横向滚动祖先：放行真实横向滚动容器 */
+  function scrollableX(el){
+    while(el&&el.nodeType===1){
+      var cs=getComputedStyle(el);
+      if((cs.overflowX==="auto"||cs.overflowX==="scroll")&&el.scrollWidth>el.clientWidth+1) return true;
+      if(el===document.documentElement) break;
+      el=el.parentElement;
+    }
+    return false;
+  }
+  var sx=0,sy=0;
+  document.addEventListener("touchstart",function(e){
+    if(!e.touches||e.touches.length!==1) return;
+    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener("touchmove",function(e){
+    if(!e.touches||e.touches.length!==1||!e.cancelable) return;
+    if(scrollableX(e.target)) return;   /* 表格/分类条等横向滚动放行 */
+    var dx=e.touches[0].clientX-sx, dy=e.touches[0].clientY-sy;
+    if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)) e.preventDefault();
+  },{passive:false});
+})();
+</script>
+</body>
+</html>

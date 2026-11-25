@@ -1090,7 +1090,9 @@ body.plat-ios.cv-focus #m-courses .cv-bar{
 body.plat-ios.cv-focus #m-courses .cv-main{
   padding-left:max(var(--focus-gutter),env(safe-area-inset-left,0px));
   padding-right:max(var(--focus-gutter),env(safe-area-inset-right,0px))}
-body.plat-ios.cv-focus .content{-webkit-overflow-scrolling:touch}
+/* iOS 橡皮筋修复：滚到顶/底后继续拉会把整个 .content 容器弹性位移，
+   连带 sticky 顶栏上移、底部露白。contain 阻断滚动链外溢，边界位移另由 JS 拦截兜底。 */
+body.plat-ios.cv-focus .content{-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
 
 /* ---------- 平台差异④：Android Chrome ----------
    手势导航条 env(safe-area-inset-bottom) 常返回 0，底栏用 max() 保底 10px；
@@ -3085,7 +3087,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
 #mat-lib .co-filter{border-color:var(--s-accent,#2E7BD6);color:var(--s-accent,#2E7BD6)}
 #mat-lib .sbox,#mat-lib #q,#mat-lib input[type="search"],#mat-lib .search{
   height:44px;border:1px solid var(--s-line,#E2E8F0);border-radius:9px;
-  background:var(--s-surface,#fff);font-size:13.5px;color:var(--s-ink,#1E293B)}
+  background:var(--s-surface,#fff);font-size:16px;color:var(--s-ink,#1E293B)}
 #mat-lib .sbox:focus,#mat-lib #q:focus,#mat-lib .search:focus{
   border-color:var(--s-brand,#0B5CAD);box-shadow:0 0 0 3px color-mix(in srgb,var(--s-brand,#0B5CAD) 14%,transparent)}
 
@@ -5009,3 +5011,63 @@ body.cv-focus #m-courses.module.active{
 #mat-lib .d-sec .std,#mat-lib .d-sec .stdline,#mat-lib .d-sec .std .std-line,
 #mat-lib .exp-body .stdline{font-size:13px!important}
 /* V3_CSS_END */
+/* ═══════════════════════════════════════════════════════════════
+   V291_CV_FOOT_NOWRAP · 学习页底部/顶部操作按钮跨系统不换行（v2.26.33；v2.26.34 适配按钮减少）
+   问题：iOS 上多按钮刚好单行，安卓/鸿蒙小屏（≤360px）或大字体下，
+        基础 .cv-foot{flex-wrap:wrap} + 固定 min-width 令「下一步」掉到第二排。
+   修复：操作按钮组强制单行 + 弹性可收缩 + white-space:nowrap，
+        用 clamp() 让 padding/字号随视口自适应，320px 极窄屏也保持一行。
+   范围：仅操作按钮组（cv-foot / 非专注态 cv-bar），不碰标签/chips 等
+        本就该换行的流式内容。桌面端行为不变。
+   ═══════════════════════════════════════════════════════════════ */
+#courseView .cv-foot{
+  flex-wrap:nowrap!important;flex-direction:row!important;
+  justify-content:space-between!important;overflow:hidden}
+/* 占位符：保留弹性但可被压缩，不再占满导致按钮被挤出 */
+#courseView .cv-foot .sp{flex:1 1 8px!important;min-width:6px!important}
+/* 操作按钮：不换行、可收缩、文字不折行；padding 随视口收窄。
+   两侧按钮保留 clamp 最小宽（宽屏接近原 88~92px，窄屏收到 58px），
+   按钮均可收缩，保证极窄屏仍单行。 */
+#courseView .cv-foot .btn,
+#courseView .cv-foot button.btn{
+  flex:0 1 auto!important;
+  min-width:clamp(58px,19vw,88px)!important;
+  width:auto!important;
+  white-space:nowrap!important;
+  padding:0 clamp(7px,2.2vw,18px)!important;
+  font-size:clamp(11px,3.4vw,13px)!important;
+  letter-spacing:0!important}
+/* V292：已移除「我学会了」按钮，讲授步仅「上一步/下一步」两枚，quiz 答错时再加「重新作答」，
+   仍复用上方 .btn 规则，单行不换行特性不变。 */
+@media(max-width:360px){
+  #courseView .cv-foot{gap:6px!important}
+  #courseView .cv-foot .btn,
+  #courseView .cv-foot button.btn{padding:0 7px!important;font-size:11.5px!important}
+}
+@media(max-width:320px){
+  #courseView .cv-foot .btn,
+  #courseView .cv-foot button.btn{padding:0 5px!important;font-size:11px!important}
+}
+
+/* 顶部操作栏（非专注态）：返回 / 标题 / 退出专注 同样禁止折行，
+   溢出部分交给标题的 ellipsis，按钮本身保持可点。
+   专注态 .cv-bar 已有 nowrap+overflow:hidden，此处覆盖普通态即可。 */
+#courseView .cv-bar{flex-wrap:nowrap!important;flex-direction:row!important;overflow:hidden}
+#courseView .cv-bar .cv-back,
+#courseView .cv-bar .cv-exit{flex:0 0 auto!important;white-space:nowrap!important}
+#courseView .cv-bar .cv-title{flex:1 1 auto!important;min-width:0!important;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important}
+/* 专注态顶栏 chip：标题(ellipsis可收缩) + 2/7进度(固定) + 退出专注(固定)，
+   整体 nowrap，杜绝窄屏/大字体下「2/7」被挤成竖排 */
+#courseView .cv-bar .cv-focus-chip{flex:1 1 auto!important;min-width:0!important;
+  flex-wrap:nowrap!important;white-space:nowrap!important;overflow:hidden}
+#courseView .cv-bar .cv-focus-chip b{flex:1 1 auto!important;min-width:0!important;
+  white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
+#courseView .cv-bar .cv-focus-chip i{flex:0 0 auto!important;white-space:nowrap!important;
+  font-variant-numeric:tabular-nums}
+#courseView .cv-bar .cv-focus-chip .cv-focus-exit{flex:0 0 auto!important;white-space:nowrap!important}
+@media(max-width:360px){
+  #courseView .cv-bar .cv-focus-chip{gap:4px!important}
+  #courseView .cv-bar .cv-focus-chip b{font-size:12px!important}
+}
+/* V291_CV_FOOT_NOWRAP_END */
