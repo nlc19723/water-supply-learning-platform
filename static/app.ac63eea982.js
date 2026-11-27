@@ -3061,6 +3061,8 @@ if(window.ResizeObserver){
   function quizHtml(q,st){
     var a=st.answers[q.id];
     var picked=(a&&a.picked)||((window.__CL_TMP&&window.__CL_TMP[q.id])||[]);
+    /* v2.26.55：单选答错时暂不揭示正确答案（点「查看解析」才揭示） */
+    var wrongSingle=!!(a&&!a.correct&&!q.multi);
     var tag=q.stem.indexOf("【冲突条件】")===0?'<span class="cl-qtag warn">冲突条件</span>':"";
     var stem=q.stem.replace(/^【冲突条件】/,"").replace(/^【排序题】/,"").replace(/^【辨析题】/,"");
     /* P1-04：q.type 本身已是「多选」，原来又拼了「 · 多选」造成重复 */
@@ -3069,7 +3071,7 @@ if(window.ResizeObserver){
     var opts=["A","B","C","D"].filter(function(k){return q.options[k];}).map(function(k){
       var cls="cv-opt cl-opt";
       if(a){
-        if(q.answer.indexOf(k)>=0) cls+=" right";
+        if(!wrongSingle&&q.answer.indexOf(k)>=0) cls+=" right";
         else if(picked.indexOf(k)>=0) cls+=" wrong";
       }else if(q.multi&&picked.indexOf(k)>=0) cls+=" picked";
       return '<button class="'+cls+'" data-k="'+k+'"'+(a?" disabled":"")+">"+
@@ -3080,8 +3082,14 @@ if(window.ResizeObserver){
     if(q.multi&&!a) ctrl='<button class="btn primary cl-submit" id="clSubmit">提交答案</button>';
     var fb="";
     if(a){
-      fb='<div class="cv-fb '+(a.correct?"ok":"bad")+'">'+
-        (a.correct?"✓ 答对了。":"✕ 再想想，这题先记进待复习。")+esc(q.explain)+"</div>";
+      if(wrongSingle){
+        fb='<div class="cv-fb bad">✕ 再想想，这题先记进待复习。'+
+           '<button class="cv-reveal" type="button">查看解析</button></div>'+
+           '<div class="cv-explain" hidden>'+esc(q.explain)+"</div>";
+      }else{
+        fb='<div class="cv-fb '+(a.correct?"ok":"bad")+'">'+
+          (a.correct?"✓ 答对了。":"✕ 再想想，这题先记进待复习。")+esc(q.explain)+"</div>";
+      }
     }
     return '<div class="cl-qhead">'+tag+typeTag+"</div>"+
       '<div class="cv-q cl-q">'+esc(stem)+"</div>"+
@@ -3303,6 +3311,14 @@ if(window.ResizeObserver){
           var box=b.querySelector(".cl-box");if(box)box.textContent=picked.indexOf(k)>=0?"✓":"";
         }
       });});
+    /* v2.26.55：单选答错后点「查看解析」才揭示正确答案与解析全文 */
+    var rv=cv.querySelector(".cv-reveal");
+    if(rv) rv.addEventListener("click",function(){
+      var ex=cv.querySelector(".cv-explain");if(ex) ex.hidden=false;
+      var qa=cur.q.answer||[];
+      qa.forEach(function(k){var ob=cv.querySelector('.cl-opt[data-k="'+k+'"]');if(ob) ob.classList.add("right");});
+      rv.hidden=true;
+    });
     var submit=cv.querySelector("#clSubmit");
     if(submit) submit.addEventListener("click",function(){
       var q=cur.q,picked=((window.__CL_TMP&&window.__CL_TMP[q.id])||[]).slice();

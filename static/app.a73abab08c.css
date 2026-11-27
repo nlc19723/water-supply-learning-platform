@@ -5071,3 +5071,39 @@ body.cv-focus #m-courses.module.active{
   #courseView .cv-bar .cv-focus-chip b{font-size:12px!important}
 }
 /* V291_CV_FOOT_NOWRAP_END */
+
+/* ===== v2.26.55 随堂练习交互优化（多选勾选可见 + 单选答错延后揭示） ===== */
+/* ① 多选题勾选框：currentColor 在 .cl-box 上解析为自身 color:#fff 导致白底白勾，
+      改为实色底 + 白勾，勾选一目了然 */
+#m-courses .cl-opt.picked .cl-box,
+#m-courses .cv-opt.picked .cl-box{background:#0B5CAD!important;border-color:#0B5CAD!important;color:#fff!important;font-weight:700!important}
+#m-courses .cl-opt.right .cl-box,
+#m-courses .cv-opt.right .cl-box{background:#0E9F6E!important;border-color:#0E9F6E!important;color:#fff!important;font-weight:700!important}
+#m-courses .cl-opt.wrong .cl-box,
+#m-courses .cv-opt.wrong .cl-box{background:#DC2626!important;border-color:#DC2626!important;color:#fff!important;font-weight:700!important}
+/* ② 勾选的选项悬浮抬升：上移 + 柔和投影，与未选项拉开层次 */
+#m-courses .cl-opt.picked,#m-courses .cv-opt.picked{
+  transform:translateY(-2px)!important;
+  box-shadow:0 6px 18px rgba(11,92,173,.20)!important;
+  transition:transform .16s ease,box-shadow .16s ease,background .15s ease,border-color .15s ease!important}
+/* ③ 单选答错后的「查看解析」按钮与折叠解析 */
+#m-courses .cv-reveal{margin-left:10px;border:1px solid rgba(185,28,28,.4)!important;
+  background:transparent!important;color:#B91C1C!important;border-radius:6px;
+  padding:3px 11px;font-size:12px;cursor:pointer;line-height:1.5}
+#m-courses .cv-reveal:hover{background:rgba(185,28,28,.08)!important}
+#m-courses .cv-explain{margin-top:10px;padding:10px 12px;border-radius:8px;
+  background:rgba(11,92,173,.06);color:var(--v3-ink2,#475569);font-size:var(--fs-3);line-height:1.65}
+#m-courses .cv-explain[hidden]{display:none!important}
+
+/* ===== v2.26.56 多选题勾选态：墨绿实底白字（覆盖 v2.26.55 淡蓝） ===== */
+#m-courses .cl-opt.picked,#m-courses .cv-opt.picked{
+  background:#0E554E!important;
+  border:1px solid #0E554E!important;
+  color:#FFFFFF!important;
+  box-shadow:0 6px 18px rgba(14,85,78,.28)!important}
+/* 勾选框反白：墨绿底上用白框白勾，保证对比 */
+#m-courses .cl-opt.picked .cl-box,
+#m-courses .cv-opt.picked .cl-box{
+  background:#FFFFFF!important;
+  border-color:#FFFFFF!important;
+  color:#0E554E!important;font-weight:700!important}
