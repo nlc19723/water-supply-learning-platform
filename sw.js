@@ -7,7 +7,7 @@
  * 为什么图片能跨版本安全复用：图片文件名自带内容哈希（名称.哈希.jpg），
  * 内容变了文件名就变、URL 就变，缓存自然 miss 拿新图；内容没变则 URL 不变、命中缓存。
  */
-const APP_CACHE = 'water-learn-v2.26.60';
+const APP_CACHE = 'water-learn-v2.26.61';
 // XXXXXXXX 由 release.sh 根据 favicon + icons 内容指纹注入；图标不变则此名不变
 const ASSETS_CACHE = 'water-learn-assets-0e8c2d8b';
 

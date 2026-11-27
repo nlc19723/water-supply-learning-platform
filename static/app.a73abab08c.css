@@ -5107,3 +5107,22 @@ body.cv-focus #m-courses.module.active{
   background:#FFFFFF!important;
   border-color:#FFFFFF!important;
   color:#0E554E!important;font-weight:700!important}
+
+
+/* ===== v2.26.61 课程正文排版美化（A档CSS + B档自测卡，尊重 v2.24.8 黑框静态表决定） ===== */
+/* A1 正文行距 1.9 → 1.75：一屏多看 1–2 行 */
+#courseView .cv-md p,#courseView .cv-md .cl-seg p{line-height:1.75!important}
+/* A2 内容卡片内边距 15px → 13px、块间距 16px → 13px：收紧留白 */
+#courseView .cv-md .cl-blk{padding:13px 15px!important;margin-bottom:13px!important}
+/* A3 段间距 9px → 10px：行距收紧后略匀段间，避免过密 */
+#courseView .cv-md .cl-seg p{margin-bottom:10px!important}
+/* B1 自测段落卡片化：淡蓝渐变 + 左侧品牌粗边，与正文分层（216 处） */
+#courseView .cv-md p.cl-selftest{
+  position:relative;
+  background:linear-gradient(135deg,rgba(11,92,173,.06),rgba(11,92,173,.015))!important;
+  border:1px solid rgba(11,92,173,.16)!important;
+  border-left:3px solid #0B5CAD!important;
+  border-radius:0 10px 10px 0!important;
+  padding:11px 14px!important;margin:12px 0 14px!important;
+  font-size:14.5px!important;line-height:1.75!important}
+/* 注释：自测行原文已含「自测：」加粗前缀，故不重复加角标，仅靠边框/底色分层 */

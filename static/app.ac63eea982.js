@@ -1729,8 +1729,8 @@ if(!document.getElementById("termtip-css")){
        深墨绿主题下用金铜色波浪线，与课程视觉令牌一致。 */
     +'.cl-seg .term{border-bottom:0;padding:0;background:none;box-shadow:none;color:inherit;'
     +'font-weight:600;cursor:pointer;border-radius:3px;'
-    +'text-decoration:underline wavy rgba(165,124,46,.7);text-decoration-thickness:1px;'
-    +'text-underline-offset:3px;text-decoration-skip-ink:none;transition:background .15s}'
+    +'text-decoration:underline wavy rgba(165,124,46,.45);text-decoration-thickness:1px;'
+    +'text-underline-offset:2px;text-decoration-skip-ink:none;transition:background .15s}'
     +'.cl-seg .term:hover,.cl-seg .term:focus,.cl-seg .term.show{background:rgba(165,124,46,.14);outline:none}'
     +'.cl-seg .term:focus-visible{outline:2px solid #A57C2E;outline-offset:2px}';
   document.head.appendChild(cs);
@@ -3018,7 +3018,7 @@ if(window.ResizeObserver){
       var matSeen={};
       return parseTeach(densify(learnerize(c.lecture),"teach")).map(function(blk){
         var body="";
-        (blk.ps||[]).forEach(function(p){ body+="<p>"+markInlineTerms(inlineMat(p,matSeen))+"</p>"; });
+        (blk.ps||[]).forEach(function(p){ body+="<p"+((/^\s*\*\*自测[：:]/.test(p||""))?' class="cl-selftest"':'')+">"+markInlineTerms(inlineMat(p,matSeen))+"</p>"; });
         (blk.tables||[]).forEach(function(t){
           var thead="<thead><tr>"+t.heads.map(function(h){return "<th>"+inline(h)+"</th>";}).join("")+"</tr></thead>";
           var tbody="<tbody>"+t.rows.map(function(row){
