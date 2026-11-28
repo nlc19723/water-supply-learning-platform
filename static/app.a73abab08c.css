@@ -5126,3 +5126,19 @@ body.cv-focus #m-courses.module.active{
   padding:11px 14px!important;margin:12px 0 14px!important;
   font-size:14.5px!important;line-height:1.75!important}
 /* 注释：自测行原文已含「自测：」加粗前缀，故不重复加角标，仅靠边框/底色分层 */
+
+/* ===== v2.26.62 修复：移动端课程表格区域无法纵向滑动页面 =====
+   现象：手指落在核对表上向下/向上滑，页面纹丝不动，只有滑到表格外的正文才滚动。
+   根因：.cl-tbl-wrap 的 overflow-x:auto 使 overflow-y:visible 被 CSS 规范隐式
+   计算成 auto，在 iOS Safari 上成为"内容并不溢出的滚动容器"——手势被该容器
+   捕获，但它自身无溢出可滚，也不把滚动冒泡给真正的滚动盒 .content。
+   v2.24.6 起表格已 min-width:0 + table-layout:fixed 全列一屏显示，横滚无必要。
+   修复：显式取消表格容器的滚动上下文，纵向手势直达页面滚动盒；
+   不动配色/边框/字号/列宽，纯滚动行为修复，课程数据零改动。 */
+#courseView .cv-md .cl-blk .cl-tbl-wrap{
+  overflow:visible!important;
+  overflow-x:visible!important;
+  overflow-y:visible!important;
+  -webkit-overflow-scrolling:auto!important;
+  overscroll-behavior:auto!important;
+}
