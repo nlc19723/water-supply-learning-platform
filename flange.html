@@ -209,6 +209,13 @@ select.dn-sel:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent
   .alert{background:#fff!important;border:1px solid #ccc}
   .alert .at{color:#000!important}
 }
+
+/* ===== v2.26.63 全面禁止移动端聚焦输入自动放大页面 =====
+   iOS Safari 规则：input/textarea/select 的 computed font-size < 16px 时，
+   聚焦会自动放大整页且卸载后不还原。所有可输入控件在移动端钳到 16px。 */
+@media (max-width: 768px){
+  input,textarea,select{font-size:16px!important}
+}
 </style>
 </head>
 <body>

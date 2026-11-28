@@ -168,6 +168,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   .confuse-warn{color:#7c2d12!important}
   .cat-tag,.lv-tag{border:1px solid #999}
 }
+
+/* ===== v2.26.63 全面禁止移动端聚焦输入自动放大页面 =====
+   iOS Safari 规则：input/textarea/select 的 computed font-size < 16px 时，
+   聚焦会自动放大整页且卸载后不还原。所有可输入控件在移动端钳到 16px。 */
+@media (max-width: 768px){
+  input,textarea,select{font-size:16px!important}
+}
 </style>
 </head>
 <body>
